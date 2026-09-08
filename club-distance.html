@@ -1,0 +1,2271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beyond the Shot — Club Distances</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<meta name="theme-color" content="#0f172a">
+
+<!-- Match the tracker's theme before paint, same storage key, so moving between
+     the two pages doesn't flash a white screen at a dark-mode user. -->
+<script>
+(function(){
+  try{
+    var s = JSON.parse(localStorage.getItem('dg_s6')||'{}');
+    var mode = s.theme || 'auto';
+    var dark = mode === 'dark' || (mode === 'auto' &&
+      window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) document.documentElement.setAttribute('data-theme','dark');
+  }catch(e){}
+})();
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0f172a; --blue:#2563eb; --green:#16a34a; --amber:#d97706; --red:#dc2626;
+  --ink:#0f172a; --muted:#64748b; --faint:#94a3b8; --border:#e2e8f0;
+  --bg:#f1f5f9; --card:#fff; --surface2:#f8fafc; --line-soft:#f1f5f9;
+  --chrome:#0f172a;
+
+  /* Diverging scale for "vs your normal": blue = longer, red = shorter,
+     neutral gray midpoint. Tints rather than saturated fills, so the value
+     text keeps its ink token instead of flipping to white on every cell. */
+  --dv-u3:#a9c9f4; --dv-u2:#c9ddf8; --dv-u1:#e8f0fd;
+  --dv-0:#f0efec;
+  --dv-d1:#fbe8e7; --dv-d2:#f8d3d2; --dv-d3:#f3b9b8;
+  --pole-up:#2a78d6; --pole-dn:#e34948;
+}
+:root[data-theme="dark"]{
+  --ink:#e6edf6; --muted:#93a4bb; --faint:#64748b; --border:#243247;
+  --bg:#0b1220; --card:#121c2e; --surface2:#16233a; --line-soft:#1a2740;
+  --dv-u3:#2b5480; --dv-u2:#234166; --dv-u1:#1e3350;
+  --dv-0:#2a3446;
+  --dv-d1:#3b2020; --dv-d2:#532525; --dv-d3:#6e2a2a;
+  --pole-up:#3987e5; --pole-dn:#e66767;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-text-size-adjust:100%;}
+header{background:var(--chrome);padding:1.15rem 1.35rem;}
+.hdr-wrap{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:.6rem;}
+.logo-icon{background:var(--blue);border-radius:8px;width:34px;height:34px;overflow:hidden;flex:0 0 auto;display:block;}
+.logo-home{display:block;flex:0 0 auto;border-radius:8px;}
+.logo-home:hover .logo-icon{outline:2px solid rgba(255,255,255,.35);outline-offset:1px;}
+.logo-home:focus-visible{outline:2px solid #fff;outline-offset:3px;}
+.logo-icon img{width:100%;height:100%;object-fit:cover;display:block;}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;color:#fff;font-size:1.05rem;line-height:1.25;}
+.logo-sub{display:block;color:rgba(255,255,255,.5);font-size:.76rem;font-weight:400;font-family:'Inter',sans-serif;}
+.back{margin-left:auto;color:#93c5fd;font-size:.76rem;text-decoration:none;font-weight:600;white-space:nowrap;}
+.back:hover{color:#fff;}
+main{max-width:1040px;margin:0 auto;padding:1.35rem 1.1rem 3.5rem;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:11px;margin-bottom:1.1rem;overflow:hidden;}
+.card-pad{padding:1.05rem 1.2rem;}
+.card-hdr{padding:.85rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;}
+.card-hdr h2{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:800;}
+.card-hdr .sub{font-size:.7rem;color:var(--muted);}
+.note{font-size:.72rem;color:var(--muted);line-height:1.55;}
+.note b{color:var(--ink);}
+p{font-size:.86rem;line-height:1.55;margin-bottom:.6rem;}
+p:last-child{margin-bottom:0;}
+
+/* ── data source ───────────────────────────────── */
+.drop{border:2px dashed var(--border);border-radius:10px;padding:1.5rem 1.2rem;text-align:center;background:var(--surface2);transition:border-color .15s,background .15s;cursor:pointer;}
+.drop.over{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 8%,var(--card));}
+.drop h3{font-size:.9rem;font-weight:700;margin-bottom:.3rem;}
+.drop p{font-size:.76rem;color:var(--muted);margin:0;}
+.btn{display:inline-block;background:var(--blue);color:#fff;border:0;border-radius:7px;padding:.5rem 1rem;font-size:.78rem;font-weight:700;font-family:inherit;cursor:pointer;text-decoration:none;}
+.btn:hover{filter:brightness(1.08);}
+.btn.ghost{background:transparent;color:var(--blue);border:1px solid var(--border);}
+.status{display:flex;align-items:center;gap:.5rem;font-size:.76rem;color:var(--muted);margin-top:.85rem;flex-wrap:wrap;}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--faint);flex:0 0 auto;}
+.dot.ok{background:var(--green);} .dot.warn{background:var(--amber);} .dot.err{background:var(--red);}
+
+/* ── tables ────────────────────────────────────── */
+.scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{background:var(--surface2);padding:.55rem .8rem;text-align:left;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;}
+thead th.num{text-align:center;}
+tbody tr{border-bottom:1px solid var(--line-soft);}
+tbody td{padding:.55rem .8rem;font-size:.84rem;vertical-align:middle;}
+tbody td.club{font-weight:700;font-family:'Syne',sans-serif;white-space:nowrap;}
+tbody td.num{text-align:center;font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,monospace;font-size:.88rem;}
+tbody td.num .n{display:block;font-size:.58rem;color:var(--faint);font-family:'Inter',sans-serif;margin-top:1px;}
+tbody td.num.dash{color:var(--faint);font-family:'Inter',sans-serif;}
+.sec-label td{background:var(--surface2);font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);padding:.35rem .8rem;}
+
+/* ── seasonality bars ──────────────────────────── */
+.bars{display:grid;grid-template-columns:2.6rem 1fr;gap:.3rem .6rem;align-items:center;}
+.bar-lbl{font-size:.72rem;color:var(--muted);text-align:right;font-weight:600;}
+.bar-track{position:relative;height:22px;background:var(--surface2);border-radius:4px;}
+.bar-mid{position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--border);left:50%;}
+.bar-fill{position:absolute;top:3px;bottom:3px;background:var(--pole-up);border-radius:2px;}
+.bar-fill.dn{background:var(--pole-dn);}
+.bar-fill.up{border-radius:2px 4px 4px 2px;}
+.bar-fill.dn{border-radius:4px 2px 2px 4px;}
+.bar-val{position:absolute;top:50%;transform:translateY(-50%);font-size:.68rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+.bar-ref{position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.45;border-radius:1px;}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.7rem;color:var(--muted);margin-top:.85rem;padding-top:.7rem;border-top:1px dashed var(--border);}
+.legend span{display:flex;align-items:center;gap:.35rem;}
+.sw{width:11px;height:11px;border-radius:3px;flex:0 0 auto;}
+
+/* ── heat grid ─────────────────────────────────── */
+.grid-tbl td.cell{text-align:center;font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,monospace;font-size:.78rem;padding:.4rem .3rem;border-radius:3px;cursor:default;}
+.grid-tbl td.cell.thin{opacity:.32;}
+.grid-tbl td.cell.empty{color:var(--faint);background:transparent;font-family:'Inter',sans-serif;}
+.scale{display:flex;align-items:center;gap:.25rem;font-size:.68rem;color:var(--muted);margin-top:.85rem;flex-wrap:wrap;}
+.scale i{width:26px;height:12px;border-radius:2px;display:inline-block;}
+.ctrl{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;padding:.7rem 1.2rem;border-bottom:1px solid var(--border);background:var(--surface2);}
+.ctrl .lbl{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-right:.15rem;}
+.chip{background:var(--card);border:1px solid var(--border);color:var(--ink);border-radius:20px;padding:.28rem .7rem;font-size:.72rem;font-weight:600;font-family:inherit;cursor:pointer;}
+.chip.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+:root[data-theme="dark"] .chip.on{background:var(--blue);border-color:var(--blue);}
+
+.sel{background:var(--card);border:1px solid var(--border);color:var(--ink);border-radius:7px;padding:.28rem .5rem;font-size:.75rem;font-weight:600;font-family:inherit;cursor:pointer;}
+.mon-pill{display:inline-block;font-size:.66rem;font-weight:600;font-variant-numeric:tabular-nums;padding:.1rem .35rem;border-radius:4px;margin:1px 2px 1px 0;white-space:nowrap;background:var(--surface2);color:var(--muted);}
+.mon-pill.up{background:var(--dv-u2);color:var(--ink);}
+.mon-pill.dn{background:var(--dv-d2);color:var(--ink);}
+.diff{display:flex;align-items:center;gap:.4rem;justify-content:center;}
+.diff-bar{position:relative;width:56px;height:16px;background:var(--surface2);border-radius:3px;flex:0 0 auto;}
+.diff-bar i{position:absolute;top:3px;bottom:3px;border-radius:2px;}
+.diff-bar u{position:absolute;top:-1px;bottom:-1px;left:50%;width:1px;background:var(--border);}
+.diff-val{font-variant-numeric:tabular-nums;font-weight:700;font-size:.82rem;min-width:2.6rem;text-align:right;}
+.tile{display:flex;gap:1.4rem;flex-wrap:wrap;padding:.85rem 1rem;background:var(--surface2);border:1px solid var(--border);border-radius:9px;}
+.tile div{min-width:0;}
+.tile .k{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);}
+.tile .v{font-size:1.25rem;font-weight:800;font-family:'Syne',sans-serif;font-variant-numeric:tabular-nums;margin-top:.1rem;}
+.tile .s{font-size:.68rem;color:var(--muted);}
+
+#tip{position:fixed;z-index:50;background:var(--navy);color:#fff;font-size:.72rem;line-height:1.45;padding:.45rem .6rem;border-radius:6px;pointer-events:none;opacity:0;transition:opacity .1s;max-width:230px;box-shadow:0 4px 14px rgba(0,0,0,.25);}
+#tip b{color:#93c5fd;}
+:root[data-theme="dark"] #tip{background:#000;border:1px solid var(--border);}
+
+pre{background:var(--navy);color:#e2e8f0;border-radius:8px;padding:.8rem .9rem;overflow-x:auto;font-size:.7rem;line-height:1.55;font-family:ui-monospace,Menlo,monospace;margin:.6rem 0;}
+details summary{cursor:pointer;font-size:.8rem;font-weight:700;}
+.hide{display:none!important;}
+footer{text-align:center;font-size:.68rem;color:var(--faint);padding-top:.4rem;}
+</style>
+</head>
+<body>
+
+<script>
+  const SB_URL      = 'https://uybvyfqqklyjsaqclebi.supabase.co';
+  const SB_ANON_KEY = 'sb_publishable_U-VaZY1pIwBC8vgLmTHzwg_Uy3zbmAD';
+  const REST_URL    = `${SB_URL}/rest/v1`;
+
+  // Runs before anything else on the page. Checks for a session left by
+  // index.html (shared via localStorage) and bounces back to the tracker
+  // immediately if nobody's logged in — before any of this page's content
+  // has a chance to render.
+  (function () {
+    let session = null;
+    try { session = JSON.parse(localStorage.getItem('sb_session') || 'null'); } catch (e) {}
+    if (!session || !session.user) {
+      location.replace('./index.html');
+      throw new Error('Not logged in — redirecting.');
+    }
+    window.SB_SESSION = session;
+  })();
+
+  // Club Distances is a Pro-only page in full — no free-tier preview.
+  // Trial/pro status lives in the same 'profiles' table the tracker uses,
+  // so a trial started there carries over here automatically. Fails safe:
+  // if status can't be confirmed, Pro content stays hidden rather than
+  // risk showing it by default.
+  async function checkAccess() {
+    const token = window.SB_SESSION.access_token;
+    let hasFullAccess = false;
+    try {
+      const r = await fetch(`${REST_URL}/profiles?select=*`, {
+        headers: { apikey: SB_ANON_KEY, Authorization: `Bearer ${token}` },
+      });
+      const rows = r.ok ? await r.json() : [];
+      const profile = rows[0];
+      if (profile) {
+        if (profile.tier === 'pro') hasFullAccess = true;
+        else if (profile.tier === 'trial' && profile.trial_started_at) {
+          const daysUsed = (Date.now() - new Date(profile.trial_started_at).getTime()) / 86400000;
+          hasFullAccess = daysUsed < 7;
+        }
+      }
+    } catch (e) {
+      console.warn('[ACCESS] could not verify subscription —', e.message);
+    }
+    if (hasFullAccess) {
+      document.getElementById('main-content').style.display = '';
+    } else {
+      showPaywall();
+    }
+  }
+
+  function showPaywall() {
+    const main = document.getElementById('main-content');
+    if (main) main.remove();
+    const div = document.createElement('div');
+    div.style.cssText = 'max-width:420px;margin:4rem auto;padding:1.5rem;text-align:center;font-family:system-ui,sans-serif';
+    div.innerHTML =
+      '<h2 style="margin:0 0 .75rem">This is a Pro feature</h2>' +
+      '<p style="color:#666;line-height:1.6;margin:0 0 1.25rem">Club distance and shot analysis is part of ' +
+      '<b>Beyond the Shot Pro</b>. Import your round history on the tracker to start your free 7-day trial ' +
+      '— everything here unlocks automatically for the duration.</p>' +
+      '<a href="./index.html" style="color:#2563eb;font-weight:600">&larr; Back to the tracker</a>';
+    document.body.appendChild(div);
+  }
+
+  checkAccess();
+</script>
+
+<div id="who-bar" style="display:flex;align-items:center;justify-content:space-between;
+     background:#111;color:#fff;padding:.5rem 1rem;font-family:system-ui,sans-serif;
+     font-size:.85rem;position:sticky;top:0;z-index:9999">
+  <span>Logged in as <b id="who-email"></b></span>
+  <button onclick="localStorage.removeItem('sb_session'); location.href='./index.html';"
+    style="background:#dc2626;color:#fff;border:none;padding:.4rem .8rem;border-radius:6px;font-size:.8rem">Log out</button>
+</div>
+<script>document.getElementById('who-email').textContent = window.SB_SESSION.user.email;</script>
+
+<header><div class="hdr-wrap">
+  <a class="logo-home" href="./index.html" title="Back to the tracker" aria-label="Back to the tracker">
+    <span class="logo-icon"><img src="icon-192.png" alt="" width="34" height="34"></span>
+  </a>
+  <div class="logo-text">Beyond the Shot<span class="logo-sub" id="who-sub">shot-tracked yardage</span></div>
+  <a class="back" href="./index.html">← Tracker</a>
+</div></header>
+
+<main id="main-content" style="display:none">
+
+<!-- ══ DATA SOURCE ══ -->
+<div class="card">
+  <div class="card-hdr"><h2>Data</h2><span class="sub">Golfshot round export (CSV)</span></div>
+  <div class="card-pad">
+    <div class="drop" id="drop">
+      <h3>Drop your rounds CSV here</h3>
+      <p>or tap to choose a file · nothing is uploaded, it is read in this browser</p>
+      <input type="file" id="file" accept=".csv,text/csv" style="display:none">
+    </div>
+    <div class="status" id="status"><span class="dot"></span><span id="status-txt">Loading saved figures…</span></div>
+    <label style="display:flex;align-items:flex-start;gap:.5rem;margin-top:.7rem;font-size:.78rem;color:var(--muted);cursor:pointer">
+      <input type="checkbox" id="overwrite-teeclub" style="margin-top:.15rem">
+      <span>Overwrite tee club on rounds that already have one for a hole, using what this file derives —
+      normally a hole with any existing tee club is left alone. Only tick this if you suspect the existing
+      data is wrong (e.g. from an earlier faulty import); it does not touch scores, putts or anything else.</span>
+    </label>
+    <div id="after-import" style="display:none;margin-top:.9rem;padding:.85rem 1rem;border-radius:9px;
+         background:rgba(22,163,74,.10);border:1px solid rgba(22,163,74,.35)">
+      <div style="font-weight:700;margin-bottom:.3rem">Saved. That is everything updated.</div>
+      <div style="font-size:.82rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem">
+        Club distances, bag gapping, dispersion, strokes gained, lag putting and the shot maps all read from
+        what was just saved.
+      </div>
+      <a href="./index.html"
+         style="display:inline-block;text-decoration:none;padding:.55rem 1.1rem;font-size:.82rem;
+                border-radius:7px;background:#2563eb;color:#fff;font-weight:700">
+        ← Back to the tracker</a>
+    </div>
+    <div class="note" style="margin-top:.8rem">
+      Request your personal data from Golfshot and export as <b>Rounds</b>. The file is parsed here on your
+      device; only the finished averages are saved to the database, never your raw shot rows.
+    </div>
+  </div>
+</div>
+
+<!-- ══ YEAR SCOPE ══ -->
+<div class="card hide" id="card-year">
+  <div class="ctrl" style="border-bottom:0">
+    <span class="lbl">Year</span>
+    <span id="year-chips"></span>
+    <span class="lbl" style="margin-left:.9rem">Clubs</span>
+    <button class="chip on" id="bag-btn" onclick="toggleBag(this)">In the bag</button>
+    <span class="sub" id="year-note" style="font-size:.7rem;color:var(--muted);margin-left:auto"></span>
+  </div>
+</div>
+
+<!-- ══ MAIN TABLE ══ -->
+<div class="card" id="card-main">
+  <div class="card-hdr"><h2>Average Distance by Club</h2><span class="sub" id="main-sub">yards</span></div>
+  <div class="scroll"><table>
+    <thead><tr><th>Club</th><th class="num">Last 5</th><th class="num">Last 10</th><th class="num">Last 20</th><th class="num">All Rounds</th></tr></thead>
+    <tbody id="tbody-main"></tbody>
+  </table></div>
+  <div class="card-pad">
+    <div class="note">
+      Every shot with that club, putter excluded. Extreme GPS glitches are dropped with Tukey's rule
+      (beyond 3× the interquartile range) — without it a single mis-logged point turns into a 930-yard drive.
+      The small grey figure is the shot count; treat an average built on a handful of swings as rough.
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEASONALITY HERO ══ -->
+<div class="card" id="card-season">
+  <div class="card-hdr"><h2>Distance Through the Year</h2><span class="sub">full swings only · % of your normal</span></div>
+  <div class="card-pad">
+    <p class="note" style="margin-bottom:.9rem">
+      Each month against your own year-round average, pooled across clubs. Every shot is compared with
+      that club's normal, so this is not skewed by which clubs a month happened to use.
+    </p>
+    <div class="bars" id="bars"></div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--pole-up)"></i>Longer than your normal</span>
+      <span><i class="sw" style="background:var(--pole-dn)"></i>Shorter than your normal</span>
+      <span id="ref-key" class="hide"><i class="sw" style="background:var(--ink);opacity:.45;width:3px;border-radius:1px"></i>All years, same month</span>
+      <span style="color:var(--faint)">Bars show % difference · figure in brackets is shots</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CLUB × MONTH GRID ══ -->
+<div class="card" id="card-grid">
+  <div class="card-hdr"><h2>By Club and Month</h2><span class="sub">difference from that club's own average</span></div>
+  <div class="ctrl">
+    <span class="lbl">Min shots</span>
+    <button class="chip" onclick="setMinN(3,this)">3</button>
+    <button class="chip on" onclick="setMinN(8,this)">8</button>
+    <button class="chip" onclick="setMinN(15,this)">15</button>
+    <span style="margin-left:auto"></span>
+    <button class="chip" id="view-btn" onclick="toggleView(this)">Show as yardages</button>
+  </div>
+  <div class="scroll"><table class="grid-tbl">
+    <thead><tr id="grid-head"></tr></thead>
+    <tbody id="tbody-grid"></tbody>
+  </table></div>
+  <div class="card-pad">
+    <div class="scale" id="scale"></div>
+    <div class="note" style="margin-top:.8rem">
+      Cells below the minimum shot count are faded rather than hidden, so a thin month reads as thin
+      rather than as missing. Blank means no full swings with that club that month.
+    </div>
+  </div>
+</div>
+
+<!-- ══ YEAR ON YEAR ══ -->
+<div class="card hide" id="card-yoy">
+  <div class="card-hdr"><h2>Year on Year, Like for Like</h2><span class="sub">same club, same month, different year</span></div>
+  <div class="ctrl">
+    <span class="lbl">Compare</span>
+    <select id="yoy-a" class="sel" onchange="renderYoY()"></select>
+    <span style="font-size:.75rem;color:var(--muted)">with</span>
+    <select id="yoy-b" class="sel" onchange="renderYoY()"></select>
+    <span class="lbl" style="margin-left:.8rem">Min shots</span>
+    <button class="chip" onclick="setMinY(5,this)">5</button>
+    <button class="chip on" onclick="setMinY(8,this)">8</button>
+    <button class="chip" onclick="setMinY(15,this)">15</button>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr>
+      <th>Club</th><th class="num" id="yoy-ha">A</th><th class="num" id="yoy-hb">B</th>
+      <th class="num">Change</th><th>Month by month</th>
+    </tr></thead>
+    <tbody id="tbody-yoy"></tbody>
+  </table></div>
+  <div class="card-pad">
+    <div id="yoy-summary"></div>
+    <div class="note" style="margin-top:.8rem">
+      Only months present in <b>both</b> years, with enough full swings on each side, are compared — that is what
+      makes it like for like. A club playing 12 yards further in July than in March tells you about the ground,
+      not about you; July against July does not have that problem.
+      Every club is listed either way — one that cannot be compared says why, since a club leaving or
+      joining the bag is worth seeing rather than silently missing from the table.
+    </div>
+  </div>
+</div>
+
+<!-- ══ METHOD ══ -->
+<div class="card">
+  <div class="card-hdr"><h2>How the seasonal figures are worked out</h2></div>
+  <div class="card-pad">
+    <p class="note">
+      A club's raw average mixes full swings with punch-outs and layups, and those partials are not evenly
+      spread through the year. Left alone they produce nonsense — on the raw numbers January comes out as
+      the longest month of your year.
+    </p>
+    <p class="note" style="margin-top:.6rem">
+      So the seasonal views count a shot only if it is <b>at least 70% of that club's 90th-percentile
+      distance</b> — a rough but effective stand-in for "went at it properly". Every club gets that
+      treatment, wedges included, because each is measured against itself.
+    </p>
+    <p class="note" style="margin-top:.6rem">
+      The one exception is the pooled <b>Distance Through the Year</b> figure, which mixes clubs together
+      and so leaves wedges out. A full wedge is a vaguer idea than a full 7 iron, and that vagueness would
+      wash into a number whose entire job is to hold steady.
+    </p>
+  </div>
+</div>
+
+<!-- ══ SETUP ══ Hidden day-to-day since this is already done — only
+     unhidden by the error paths below if the database table itself is
+     ever actually missing, so the recovery SQL stays reachable without
+     cluttering the page every time it's opened. -->
+<div class="card" id="card-setup" style="display:none">
+  <div class="card-hdr"><h2>Database setup</h2><span class="sub" id="setup-sub"></span></div>
+  <div class="card-pad">
+    <details id="setup-details">
+      <summary>Show the SQL</summary>
+      <p class="note" style="margin:.7rem 0 0">
+        Run this once in the Supabase SQL editor. It stores only the finished averages — a few kilobytes —
+        and switches on row-level security with policies that let the app read and write it.
+      </p>
+      <pre id="sql"></pre>
+      <button class="btn ghost" onclick="copySql(this)">Copy SQL</button>
+    </details>
+  </div>
+</div>
+
+<footer>Beyond the Shot · club distances</footer>
+</main>
+<div id="tip"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   Supabase — multi-user (TEST PROJECT: "Multi User Golf").
+   SB_URL/SB_ANON_KEY/REST_URL already declared in the early access-gate
+   script above. Only aggregates are written here; raw shot rows never
+   leave the browser.
+   ═══════════════════════════════════════════════════════ */
+const TABLE  = 'club_stats';
+
+// Session was already checked and stashed by the early script right after
+// <body> — by this point we know it exists, or the page would already have
+// redirected away.
+const session = window.SB_SESSION;
+function currentUser() { return session ? session.user : null; }
+function authHeaders(extra = {}) {
+  const token = session ? session.access_token : SB_ANON_KEY;
+  return { apikey: SB_ANON_KEY, Authorization: `Bearer ${token}`, ...extra };
+}
+
+// Shares the same 'profiles' table as the tracker. A full-analysis import
+// here is just as valid a trial trigger as importing rounds on the
+// tracker, so this checks/starts it the same way rather than requiring
+// someone to also touch the tracker first.
+async function startTrialIfNeeded() {
+  try {
+    const r = await fetch(`${REST_URL}/profiles?select=*`, { headers: authHeaders() });
+    const rows = r.ok ? await r.json() : [];
+    let prof = rows[0];
+    if (!prof) {
+      const created = await fetch(`${REST_URL}/profiles`, {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json', Prefer: 'return=representation' }),
+        body: JSON.stringify({ user_id: currentUser().id, tier: 'free' }),
+      });
+      prof = created.ok ? (await created.json())[0] : null;
+    }
+    if (prof && !prof.trial_started_at) {
+      await fetch(`${REST_URL}/profiles?user_id=eq.${currentUser().id}`, {
+        method: 'PATCH',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ tier: 'trial', trial_started_at: new Date().toISOString() }),
+      });
+    }
+  } catch (e) {
+    console.warn('[PROFILE] could not start trial from Club Distances —', e.message);
+  }
+}
+
+const SQL = `-- Run once, in the Supabase SQL editor for this project:
+alter table club_stats add column if not exists user_id uuid references auth.users(id);
+alter table shot_map   add column if not exists user_id uuid references auth.users(id);
+alter table club_stats enable row level security;
+alter table shot_map   enable row level security;
+create policy "own club_stats only" on club_stats for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "own shot_map only"   on shot_map   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);`;
+document.getElementById('sql').textContent = SQL;
+
+function copySql(btn){
+  navigator.clipboard.writeText(SQL).then(()=>{
+    const t = btn.textContent; btn.textContent = 'Copied';
+    setTimeout(()=>btn.textContent = t, 1400);
+  });
+}
+
+async function sbLoad(){
+  const r = await fetch(`${REST_URL}/${TABLE}?select=*&order=created_at.desc&limit=1`,
+    { headers: authHeaders() });
+  if(!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  const rows = await r.json();
+  return rows[0] || null;
+}
+async function sbSaveShotMap(map){
+  if(!map) return;
+  const r = await fetch(`${REST_URL}/shot_map`, {
+    method:'POST',
+    headers: authHeaders({ 'Content-Type':'application/json' }),
+    body: JSON.stringify({ user_id: currentUser().id,
+                           shots: map.courses.reduce((n,c)=>n+c.holes.reduce((m,h)=>m+h.shots.length,0),0),
+                           payload: map })
+  });
+  if(!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+}
+
+async function sbSave(payload){
+  const r = await fetch(`${REST_URL}/${TABLE}`, {
+    method:'POST',
+    headers: authHeaders({ 'Content-Type':'application/json' }),
+    body: JSON.stringify({ user_id: currentUser().id, source_rounds:payload.rounds, source_shots:payload.shots, payload })
+  });
+  if(!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+}
+
+/* ═══ CSV ═══════════════════════════════════════════════
+   Hand-rolled because the export quotes fields that contain
+   commas (GIR arrives as "1,111.11%"), so a split(',') mangles
+   every row after column eight.
+   ═══════════════════════════════════════════════════════ */
+function parseCSV(text){
+  if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = []; let row = [], val = '', q = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(q){
+      if(c === '"'){ if(text[i+1] === '"'){ val += '"'; i++; } else q = false; }
+      else val += c;
+    } else if(c === '"') q = true;
+    else if(c === ','){ row.push(val); val = ''; }
+    else if(c === '\n'){ row.push(val); rows.push(row); row = []; val = ''; }
+    else if(c !== '\r') val += c;
+  }
+  if(val.length || row.length){ row.push(val); rows.push(row); }
+  if(!rows.length) return [];
+  const head = rows.shift().map(h=>h.trim());
+  return rows.filter(r=>r.length>1).map(r=>{
+    const o = {}; head.forEach((h,i)=> o[h] = (r[i]||'').trim()); return o;
+  });
+}
+
+/* Golfshot writes M/D/YYYY h:mm:ss AM/PM. Date.parse is unreliable on this
+   across browsers, so it is picked apart by hand. */
+function parseDate(s){
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s || '');
+  if(!m) return null;
+  return { y:+m[3], mo:+m[1], key:`${m[3]}-${String(m[1]).padStart(2,'0')}-${String(m[2]).padStart(2,'0')} ${s.slice(10)}` };
+}
+
+const CLUBS = [
+  ['Woods',  [['1W','Driver (1W)'],['3W','3 Wood'],['4W','4 Wood'],['5W','5 Wood']]],
+  ['Hybrids',[['3Hy','3 Hybrid'],['4Hy','4 Hybrid'],['5Hy','5 Hybrid'],['6Hy','6 Hybrid'],['7Hy','7 Hybrid']]],
+  ['Irons',  [['3i','3 Iron'],['4i','4 Iron'],['5i','5 Iron'],['6i','6 Iron'],['7i','7 Iron'],['8i','8 Iron'],['9i','9 Iron']]],
+  ['Wedges', [['Pw','Pitching Wedge'],['Sw','Sand Wedge'],['Lw','Lob Wedge']]],
+];
+const NAME = {}; CLUBS.forEach(([,list])=> list.forEach(([c,n])=> NAME[c] = n));
+/* Every club except the putter gets the full-swing treatment, wedges included —
+   a club compared against itself is fair game. The pooled seasonal index is the
+   exception: it mixes clubs together, and wedge "full swings" are fuzzy enough
+   to add noise to a figure whose whole job is to be stable. */
+const SWING_CLUBS = new Set(['1W','3W','4W','5W','3Hy','4Hy','5Hy','6Hy','7Hy','3i','4i','5i','6i','7i','8i','9i','Pw','Sw','Lw']);
+const POOL_CLUBS  = new Set(['1W','3W','4W','5W','3Hy','4Hy','5Hy','6Hy','7Hy','3i','4i','5i','6i','7i','8i','9i']);
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const mean = v => v.reduce((a,b)=>a+b,0) / v.length;
+function quantile(sorted, p){
+  const i = (sorted.length - 1) * p, lo = Math.floor(i), hi = Math.ceil(i);
+  return lo === hi ? sorted[lo] : sorted[lo] + (sorted[hi] - sorted[lo]) * (i - lo);
+}
+/* Tukey, 3× IQR — wide enough to keep a genuinely long drive, tight enough
+   to drop a GPS jump. */
+function tukey(v){
+  if(v.length < 4) return v;
+  const s = [...v].sort((a,b)=>a-b), q1 = quantile(s,.25), q3 = quantile(s,.75), k = 3*(q3-q1);
+  return v.filter(x => x >= q1-k && x <= q3+k);
+}
+
+/* ═══ PUTT DISTANCES ════════════════════════════════════
+   Reconstructed from GPS, available from Feb 2026 onward.
+
+   Two things make this work, neither of them obvious:
+   • "Yardage To Pin" is ZERO on the first putt of a hole and only filled in
+     for follow-ups, so the longest value on a hole is the tap-in, not the
+     approach putt. The column is unusable for this on its own.
+   • Each putt's end coordinate is the next putt's start coordinate, so the
+     strokes can be threaded end-to-start into their true order. The last
+     putt's end is the hole; the head of the chain is the first putt.
+
+   A hole only counts when the chain length matches the scorecard's putt count.
+   Allowing chains one short — an unlogged tap-in — drops the make rate from
+   inside three feet from 100% to 62%, which is the signature of the first putt
+   being the missing one rather than the last.                              */
+const FT_PER_M = 3.280839895;
+function metresBetween(a, b, c, d){
+  const R = 6371000, rad = Math.PI/180;
+  const p1 = a*rad, p2 = c*rad, dp = (c-a)*rad, dl = (d-b)*rad;
+  const x = Math.sin(dp/2)**2 + Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));
+}
+const feetBetween = (a,b,c,d) => metresBetween(a,b,c,d)*FT_PER_M;
+
+/* Initial bearing from one coordinate to another, in degrees. Needed to say
+   which way a shot missed: the aim line is start-to-pin, and the angle between
+   that and where the ball actually finished separates short from left. Same
+   formula the tracker uses for its dispersion charts — kept in both files
+   rather than shared, because these two pages ship independently. */
+const bearingBetween = (ay, ax, by, bx) => {
+  const rad = Math.PI/180;
+  const y = Math.sin((bx-ax)*rad) * Math.cos(by*rad);
+  const x = Math.cos(ay*rad)*Math.sin(by*rad) - Math.sin(ay*rad)*Math.cos(by*rad)*Math.cos((bx-ax)*rad);
+  return (Math.atan2(y, x) / rad + 360) % 360;
+};
+
+const PUTT_BANDS = [[0,3,'0–3 ft'],[3,6,'3–6 ft'],[6,10,'6–10 ft'],[10,15,'10–15 ft'],
+                    [15,20,'15–20 ft'],[20,30,'20–30 ft'],[30,Infinity,'30 ft +']];
+
+/* ═══ STROKES GAINED ═════════════════════════════════════
+   Every other number here says what happened. This one says whether it was any
+   good, by comparing each shot against what Dan normally takes to hole out from
+   where it started.
+
+   The baseline is built from his own rounds, not a tour table. A scratch
+   golfer's expected strokes would just report that he is not a scratch golfer,
+   over and over, on every shot. Measured against himself, an average round
+   comes out at zero and the numbers say something he cannot already see: which
+   part of the game was better or worse than his own normal, and which way it is
+   moving.
+
+   That does mean the whole record averages to zero by construction. The split
+   between categories and the movement over time are the readable parts; the
+   grand total is not a score, it is the definition.
+
+   A hole is only used when every stroke on it is accounted for — shots tracked,
+   putts chained, and the two adding up to the number on the card. Anything less
+   and a missing stroke would be scored as a gain.
+   ═══════════════════════════════════════════════════════ */
+/* Bands are wide on purpose. Only a hundred or so holes have everything needed
+   to be measured, so narrow bands would each rest on a handful of shots, and the
+   monotonic pass below would then flatten whole stretches of the curve into one
+   value — which shows up later as an entire category looking good or bad for no
+   reason but the binning. */
+const SG_OFF   = [0,20,40,60,90,120,150,180,210,250,320];   // yards, off the green
+const SG_GREEN = [0,3,6,10,15,22,32,50,120];                // feet, on the green
+
+function sgTable(obs, edges, minN){
+  /* Average strokes to hole out, by distance band. Bands thinner than minN are
+     dropped rather than reported: two observations would set the value the rest
+     of the game is judged against. */
+  const bands = [];
+  for(let i = 0; i < edges.length - 1; i++){
+    const lo = edges[i], hi = edges[i+1];
+    const v = obs.filter(o => o.d >= lo && o.d < hi);
+    if(v.length < minN) continue;
+    bands.push({ lo, hi, mid: (lo + hi) / 2, n: v.length, e: mean(v.map(o => o.s)) });
+  }
+  if(bands.length < 3) return null;
+  /* Expected strokes cannot fall as the ball gets further away, but a thin band
+     can say otherwise. A running maximum keeps the curve honest without
+     throwing away the shape of it. */
+  for(let i = 1; i < bands.length; i++) bands[i].e = Math.max(bands[i].e, bands[i-1].e);
+  return bands;
+}
+
+/* Straight-line interpolation between band centres. A step function would have
+   a shot gaining a tenth of a stroke for crossing 150 yards and nothing for the
+   twenty yards either side of it. */
+function sgExpect(bands, d){
+  if(!bands || !bands.length) return null;
+  if(d <= bands[0].mid) return bands[0].e;
+  const last = bands[bands.length-1];
+  if(d >= last.mid) return last.e;
+  for(let i = 0; i < bands.length - 1; i++){
+    const a = bands[i], b = bands[i+1];
+    if(d >= a.mid && d <= b.mid) return a.e + (b.e - a.e) * (d - a.mid) / (b.mid - a.mid);
+  }
+  return last.e;
+}
+
+function buildStrokesGained(holeMap){
+  const TOL = 1.5, SHOT_TOL = 15;
+  const usable = [];
+  const cov = { holes: 0, noPin: 0, noChain: 0, notAdding: 0, ok: 0 };
+
+  for(const h of holeMap.values()){
+    cov.holes++;
+    if(!h.putts.length || h.cardPutts === null || h.cardPutts < 1 || !h.score){ cov.noChain++; continue; }
+
+    // ── putts: same chain as the putt-distance figures ──
+    const u = [...new Map(h.putts.map(p => [p.join(','), p])).values()];
+    const heads = u.filter(p => !u.some(q => q !== p && feetBetween(p[0],p[1],q[2],q[3]) < TOL));
+    const tails = u.filter(p => !u.some(q => q !== p && feetBetween(p[2],p[3],q[0],q[1]) < TOL));
+    if(heads.length !== 1 || tails.length !== 1){ cov.noChain++; continue; }
+    const chain = [heads[0]], used = new Set(chain);
+    for(;;){
+      const cur = chain[chain.length-1];
+      const nxt = u.find(q => !used.has(q) && feetBetween(cur[2],cur[3],q[0],q[1]) < TOL);
+      if(!nxt) break;
+      chain.push(nxt); used.add(nxt);
+    }
+    if(chain.length !== u.length || chain.length !== h.cardPutts){ cov.noChain++; continue; }
+    const pin = [chain[chain.length-1][2], chain[chain.length-1][3]];
+
+    // ── full shots, threaded into play order ──
+    const S = h.shots;
+    if(!S.length){ cov.noPin++; continue; }
+    let order = null;
+    if(S.length === 1) order = [0];
+    else {
+      const ix = S.map((_, i) => i);
+      const runsInto = (i, j) => feetBetween(S[i].ey, S[i].ex, S[j].sy, S[j].sx) < SHOT_TOL;
+      const hd = ix.filter(i => !ix.some(j => j !== i && runsInto(j, i)));
+      if(hd.length === 1){
+        const seq = [hd[0]], left = new Set(ix); left.delete(hd[0]);
+        for(;;){
+          const cur = seq[seq.length-1];
+          const nx = [...left].filter(j => runsInto(cur, j));
+          if(nx.length !== 1) break;
+          seq.push(nx[0]); left.delete(nx[0]);
+        }
+        if(seq.length === S.length) order = seq;
+      }
+    }
+    if(!order){ cov.noChain++; continue; }
+
+    /* The one condition that makes the arithmetic safe: tracked shots plus
+       chained putts equal what went on the card. A hole a stroke short would
+       hand that stroke to whichever category happened to be next. */
+    if(order.length + h.cardPutts !== h.score){ cov.notAdding++; continue; }
+    cov.ok++;
+
+    const par = h.par || null;
+    const steps = [];
+    order.forEach((si, k) => {
+      const s = S[si];
+      const from = feetBetween(s.sy, s.sx, pin[0], pin[1]) / 3;        // yards
+      const to   = feetBetween(s.ey, s.ex, pin[0], pin[1]) / 3;
+      const rest = (order.length - k - 1) + h.cardPutts;               // strokes after this one
+      /* Whether the ball finished on the green is known exactly rather than
+         guessed from distance: if this was the last full shot, the next stroke
+         was a putt. Guessing it from proximity credits a chip-out that stopped
+         thirty yards away as though it were on the putting surface, which
+         flatters every approach in the record. */
+      const cat = k === 0 && par && par >= 4 ? 'otd' : (from > 50 ? 'app' : 'arg');
+      /* Which way an approach finished, in the same frame the dispersion chart
+         uses: the aim line is start-to-pin, "long" is past the flag along it,
+         "side" is across it. Only meaningful for a shot that was trying to
+         reach the green, so tee shots and the shots still short of 50 yards
+         are left untagged. */
+      let missDir = null, missDist = null, shortOfGreen = false;
+      /* Only shots that actually got to the green count as a miss with a
+         direction. One that finished sixty yards away did not miss the green
+         short, it failed to reach it, and averaging the two together makes
+         "short" look like a catastrophe when most of it is a different error
+         entirely. Those are counted on their own instead. */
+      // A second shot on a par 5 that stops short of the green is usually a
+      // lay-up, not a failure. Counted apart, because averaging a deliberate
+      // wedge distance in with a topped 5 wood describes neither.
+      const layup = cat === 'app' && to > 40 && par >= 5 && k === 1;
+      if(cat === 'app' && to > 40 && !layup) shortOfGreen = true;
+      if(cat === 'app' && to > 0 && to <= 40){
+        const aim = bearingBetween(s.sy, s.sx, pin[0], pin[1]);
+        const fromPin = bearingBetween(pin[0], pin[1], s.ey, s.ex);
+        const off = (((fromPin - aim + 540) % 360) - 180) * Math.PI / 180;
+        const lng = to * Math.cos(off), side = to * Math.sin(off);
+        missDist = to;
+        missDir = Math.abs(lng) >= Math.abs(side)
+          ? (lng < 0 ? 'short' : 'long')
+          : (side < 0 ? 'left' : 'right');
+      }
+      steps.push({ kind: 'off', from, to, rest, onGreen: k === order.length - 1,
+                   cat, missDir, missDist, shortOfGreen, layup, club: s.club });
+    });
+    chain.forEach((p, j) => {
+      const from = feetBetween(p[0], p[1], pin[0], pin[1]);            // feet
+      const to   = feetBetween(p[2], p[3], pin[0], pin[1]);
+      steps.push({ kind: 'green', from, to, rest: h.cardPutts - j - 1, cat: 'putt' });
+    });
+    usable.push({ round: h.round, yr: h.yr, hole: h.hole, par, score: h.score, steps });
+  }
+
+  if(cov.ok < 40) return null;
+
+  // ── the baseline: what he actually takes from here ──
+  const offObs = [], greenObs = [];
+  usable.forEach(u => u.steps.forEach(st => {
+    const s = st.rest + 1;                       // this stroke plus everything after it
+    if(st.kind === 'off') offObs.push({ d: st.from, s });
+    else greenObs.push({ d: st.from, s });
+  }));
+  const off = sgTable(offObs, SG_OFF, 10);
+  const green = sgTable(greenObs, SG_GREEN, 10);
+  if(!off || !green) return null;
+
+  // Where the ball ends up is worth whatever it is worth from there — on the
+  // putting curve if it finished on the green, on the full-shot curve if not.
+  const expectAfter = st =>
+      st.kind === 'green' ? (st.to < 0.5 ? 0 : sgExpect(green, st.to))
+    : st.onGreen          ? sgExpect(green, st.to * 3)
+    :                       sgExpect(off, st.to);
+
+  const CATS = ['otd','app','arg','putt'];
+  const byRound = new Map();
+  usable.forEach(u => {
+    const r = byRound.get(u.round) || { round: u.round, yr: u.yr, holes: 0,
+                                        otd:0, app:0, arg:0, putt:0, total:0 };
+    u.steps.forEach(st => {
+      const before = st.kind === 'green' ? sgExpect(green, st.from) : sgExpect(off, st.from);
+      const gained = before - expectAfter(st) - 1;
+      r[st.cat] += gained; r.total += gained;
+    });
+    r.holes++;
+    byRound.set(u.round, r);
+  });
+
+  const rounds = [...byRound.values()].sort((a,b) => a.round < b.round ? -1 : 1)
+    .map(r => ({ date: r.round.slice(0,10), holes: r.holes,
+                 ...Object.fromEntries(CATS.map(c => [c, +r[c].toFixed(2)])),
+                 total: +r.total.toFixed(2) }));
+
+  /* Per hole, not per round, and this matters. Only a couple of holes a round
+     have everything needed to be measured, so scaling those up to eighteen —
+     the number a golfer actually thinks in — would multiply whatever noise is
+     in two holes by seven and present the result as a round. Per measured hole
+     is the number the data can carry. It becomes a per-round figure the day
+     enough holes come in, and not before. */
+  const holeList = [];
+  usable.forEach(u => {
+    const rec = { round: u.round, otd:0, app:0, arg:0, putt:0, total:0 };
+    u.steps.forEach(st => {
+      const before = st.kind === 'green' ? sgExpect(green, st.from) : sgExpect(off, st.from);
+      const g = before - expectAfter(st) - 1;
+      rec[st.cat] += g; rec.total += g;
+    });
+    holeList.push(rec);
+  });
+  holeList.sort((a,b) => a.round < b.round ? -1 : 1);
+
+  const slice = list => {
+    if(!list.length) return null;
+    const per = c => list.reduce((a,r) => a + r[c], 0) / list.length;
+    return { holes: list.length,
+             ...Object.fromEntries(CATS.map(c => [c, +per(c).toFixed(3)])),
+             total: +CATS.reduce((a,c) => a + per(c), 0).toFixed(3) };
+  };
+  const windows = { all: slice(holeList) };
+  if(holeList.length >= 60) windows.recent = slice(holeList.slice(-Math.floor(holeList.length/2)));
+
+  /* What each miss costs. Counting misses says he goes short three times as
+     often as long; only scoring them says whether that is expensive. Each
+     approach is worth the difference between the expectation it started with
+     and the one it left behind, so a miss that leaves an easy chip scores
+     better than one that leaves a bunker, without anyone having to know a
+     bunker was there. */
+  const missAgg = {};
+  const shortAgg = { n:0, sg:0, prox:0, from:0 };
+  const layAgg = { n:0, sg:0, prox:0, from:0 };
+  let appTotal = 0;
+  usable.forEach(u => u.steps.forEach(st => {
+    if(st.cat !== 'app') return;
+    appTotal++;
+    const g = (sgExpect(off, st.from) - expectAfter(st) - 1);
+    if(st.layup){
+      layAgg.n++; layAgg.sg += g; layAgg.prox += st.to; layAgg.from += st.from;
+      return;
+    }
+    if(st.shortOfGreen){
+      shortAgg.n++; shortAgg.sg += g; shortAgg.prox += st.to; shortAgg.from += st.from;
+      return;
+    }
+    if(!st.missDir) return;
+    const m = missAgg[st.missDir] || (missAgg[st.missDir] = { n:0, sg:0, prox:0, from:0 });
+    m.n++; m.sg += g; m.prox += st.missDist; m.from += st.from;
+  }));
+  const miss = Object.entries(missAgg)
+    .filter(([, m]) => m.n >= 5)
+    .map(([dir, m]) => ({ dir, n: m.n,
+                          sg:   +(m.sg / m.n).toFixed(3),
+                          prox: +(m.prox / m.n).toFixed(1),
+                          from: Math.round(m.from / m.n) }))
+    .sort((a,b) => a.sg - b.sg);
+  const layups = layAgg.n >= 5 ? {
+    n: layAgg.n, sg: +(layAgg.sg/layAgg.n).toFixed(3),
+    prox: +(layAgg.prox/layAgg.n).toFixed(1), from: Math.round(layAgg.from/layAgg.n),
+  } : null;
+  const shortOfGreen = shortAgg.n >= 5 ? {
+    n: shortAgg.n, pct: +(100*shortAgg.n/Math.max(1,appTotal)).toFixed(1),
+    sg: +(shortAgg.sg/shortAgg.n).toFixed(3),
+    prox: +(shortAgg.prox/shortAgg.n).toFixed(1),
+    from: Math.round(shortAgg.from/shortAgg.n),
+  } : null;
+
+  return {
+    v: 3, coverage: cov, rounds, windows, miss, shortOfGreen, layups, approaches: appTotal,
+    holesMeasured: holeList.length,
+    roundsMeasured: rounds.length,
+    baseline: {
+      off:   off.map(b => [b.lo, b.hi, +b.e.toFixed(2), b.n]),
+      green: green.map(b => [b.lo, b.hi, +b.e.toFixed(2), b.n]),
+    },
+  };
+}
+
+/* Lag putting, by the distance the putt started from. Reported as how close the
+   first putt finished and how often that left a tap-in, because those are the
+   numbers a practice green can do something about — "you three-putt 18% of the
+   time" is a symptom, "from 30-45 feet you leave it 4 ft" is a skill. */
+const LAG_BANDS = [[15,25],[25,35],[35,50],[50,120]];
+
+function buildLag(recs){
+  const long = recs.filter(r => r.d >= 15);
+  if(long.length < 15) return null;
+  const bands = LAG_BANDS.map(([lo,hi]) => {
+    const v = long.filter(r => r.d >= lo && r.d < hi);
+    if(!v.length) return { lo, hi, n: 0 };
+    const leaves = v.map(r => r.leave).sort((a,b)=>a-b);
+    const holed = v.filter(r => r.putts === 1).length;
+    return {
+      lo, hi, n: v.length,
+      holed,
+      avg:    +mean(leaves).toFixed(1),
+      median: +leaves[Math.floor(leaves.length/2)].toFixed(1),
+      // the two outcomes that decide whether a long putt becomes a three-putt
+      tap:    +(100 * v.filter(r => r.leave > 0 && r.leave <= 3).length / v.length).toFixed(1),
+      miss6:  +(100 * v.filter(r => r.leave > 6).length / v.length).toFixed(1),
+      three:  +(100 * v.filter(r => r.putts >= 3).length / v.length).toFixed(1),
+    };
+  }).filter(b => b.n >= 5);
+  if(bands.length < 2) return null;
+
+  const all = long.map(r => r.leave).sort((a,b)=>a-b);
+  /* Short or long? A leave is only signed if you know which side of the hole it
+     finished, and the chain does not carry that — but the second putt's own
+     length against the first putt's length does say whether the pace was short
+     of the hole or past it in aggregate. Left out rather than guessed. */
+  return {
+    n: long.length,
+    avg: +mean(all).toFixed(1),
+    median: +all[Math.floor(all.length/2)].toFixed(1),
+    tap: +(100 * long.filter(r => r.leave > 0 && r.leave <= 3).length / long.length).toFixed(1),
+    miss6: +(100 * long.filter(r => r.leave > 6).length / long.length).toFixed(1),
+    three: +(100 * long.filter(r => r.putts >= 3).length / long.length).toFixed(1),
+    bands,
+  };
+}
+
+function buildPuttDistances(holeMap){
+  const TOL = 1.5;                       // feet: same spot, allowing for GPS jitter
+  const recs = [];
+  let withGps = 0, ambiguous = 0, incomplete = 0;
+
+  for(const h of holeMap.values()){
+    if(!h.putts.length) continue;
+    withGps++;
+    if(h.cardPutts === null || h.cardPutts < 1) continue;
+    const u = [...new Map(h.putts.map(p => [p.join(','), p])).values()];
+
+    const heads = u.filter(p => !u.some(q => q !== p && feetBetween(p[0],p[1],q[2],q[3]) < TOL));
+    const tails = u.filter(p => !u.some(q => q !== p && feetBetween(p[2],p[3],q[0],q[1]) < TOL));
+    if(heads.length !== 1 || tails.length !== 1){ ambiguous++; continue; }
+
+    const chain = [heads[0]], used = new Set(chain);
+    for(;;){
+      const cur = chain[chain.length-1];
+      const nxt = u.find(q => !used.has(q) && feetBetween(cur[2],cur[3],q[0],q[1]) < TOL);
+      if(!nxt) break;
+      chain.push(nxt); used.add(nxt);
+    }
+    if(chain.length !== u.length){ ambiguous++; continue; }
+    if(chain.length !== h.cardPutts){ incomplete++; continue; }
+
+    const hole = chain[chain.length-1];
+    const first = feetBetween(chain[0][0], chain[0][1], hole[2], hole[3]);
+    if(!(first > 0) || first > 120) continue;
+    /* Where the first putt finished, not just whether it went in. This is the
+       lag skill, and it is the thing a long putt is actually judged on — from
+       forty feet nobody is trying to hole it, they are trying to leave a tap-in.
+       The chain already knows: the first putt's end is the second putt's start,
+       and its distance from the hole is the leave. A holed first putt leaves
+       nothing, which is the correct zero rather than a missing value. */
+    const leave = chain.length > 1
+      ? feetBetween(chain[0][2], chain[0][3], hole[2], hole[3])
+      : 0;
+    recs.push({ d: first, leave, putts: h.cardPutts, round: h.round, yr: h.yr });
+  }
+  if(recs.length < 20) return null;
+
+  const bands = PUTT_BANDS.map(([lo,hi,label]) => {
+    const s = recs.filter(r => r.d >= lo && r.d < hi);
+    return { label, n: s.length,
+      made:  s.length ? +(100*s.filter(r=>r.putts===1).length/s.length).toFixed(1) : null,
+      three: s.length ? +(100*s.filter(r=>r.putts>=3).length/s.length).toFixed(1) : null,
+      avg:   s.length ? +(mean(s.map(r=>r.putts))).toFixed(2) : null };
+  });
+  const d = recs.map(r=>r.d).sort((a,b)=>a-b);
+  const dates = [...new Set(recs.map(r=>r.round))].sort();
+  // One median-first-putt-distance figure per round, chronological — small
+  // (one number and a hole count per round, no positions or raw shots) but
+  // enough to show whether the typical first putt is actually getting
+  // shorter over time, or to slice by last N rounds, without needing the
+  // whole reconstruction re-run for every different window someone wants.
+  const byRound = new Map();
+  recs.forEach(r => { if(!byRound.has(r.round)) byRound.set(r.round, []); byRound.get(r.round).push(r.d); });
+  const perRound = [...byRound.entries()].sort((a,b) => a[0] < b[0] ? -1 : 1).map(([round, ds]) => {
+    const s = [...ds].sort((a,b)=>a-b);
+    return { date: round.slice(0,10), median: +(s[Math.floor(s.length/2)]).toFixed(1), holes: ds.length };
+  });
+  return {
+    holes: recs.length, rounds: dates.length,
+    from: dates[0] ? dates[0].slice(0,10) : null, to: dates[dates.length-1] ? dates[dates.length-1].slice(0,10) : null,
+    coverage: { withGps, ambiguous, incomplete },
+    lag: buildLag(recs),
+    median: +(d[Math.floor(d.length/2)]).toFixed(1),
+    inside: { 3:+(100*d.filter(x=>x<3).length/d.length).toFixed(1),
+              6:+(100*d.filter(x=>x<6).length/d.length).toFixed(1),
+              10:+(100*d.filter(x=>x<10).length/d.length).toFixed(1) },
+    bands,
+    perRound,
+  };
+}
+
+/* ═══ HEAD TO HEAD ══════════════════════════════════════
+   Playing partners' cards ride along in the same export, keyed by Name and
+   sharing a Round DateTime with yours. Pulled out here so the tracker can
+   offer them for import rather than having them typed in by hand.
+   Note the export carries no handicap for anyone — that has to be supplied
+   in the app, because the result is decided on Stableford, not gross.      */
+function buildH2H(allRows, meKey){
+  const byPlayerRound = new Map();
+  for(const r of allRows){
+    const name = (r['Name'] || '').trim();
+    if(!name) continue;
+    const dt = parseDate(r['Round DateTime (UTC)']); if(!dt) continue;
+    const key = name.toLowerCase() + '|' + dt.key;
+    let e = byPlayerRound.get(key);
+    if(!e){
+      const tot = parseInt(r['Round Score'], 10);
+      e = { name, key: name.toLowerCase(), round: dt.key,
+            date: `${dt.y}-${String(dt.mo).padStart(2,'0')}-${dt.key.slice(8,10)}`,
+            course: (r['Course Name'] || '').trim(),
+            total: Number.isFinite(tot) && tot > 0 ? tot : null,
+            holes: Array(18).fill(null) };
+      byPlayerRound.set(key, e);
+    }
+    const hn = parseInt(r['Hole Number'], 10);
+    const hs = parseInt(r['Hole Score'], 10);
+    if(hn >= 1 && hn <= 18 && Number.isFinite(hs) && hs > 0) e.holes[hn-1] = hs;
+  }
+
+  const mine = new Map();
+  for(const e of byPlayerRound.values()) if(e.key === meKey) mine.set(e.round, e);
+
+  const out = [];
+  for(const e of byPlayerRound.values()){
+    if(e.key === meKey) continue;
+    const me = mine.get(e.round);
+    if(!me || e.total === null) continue;          // no card of yours, or no score of theirs
+    const played = e.holes.filter(h => h !== null).length;
+    out.push({
+      date: e.date, round: e.round, course: e.course,
+      opp: e.name, oppTotal: e.total, oppHoles: e.holes, oppPlayed: played,
+      myTotal: me.total, myPlayed: me.holes.filter(h => h !== null).length,
+    });
+  }
+  /* "Adam Baker" and "Adam baker " are one person; keep the tidiest spelling —
+     the properly capitalised variant, breaking ties on which appears more. */
+  const variants = new Map();
+  for(const m of out){
+    const k = m.opp.toLowerCase();
+    const v = variants.get(k) || new Map();
+    const label = m.opp.trim();
+    v.set(label, (v.get(label) || 0) + 1);
+    variants.set(k, v);
+  }
+  const canon = new Map();
+  const caps = s => (s.match(/[A-Z]/g) || []).length;
+  for(const [k, v] of variants){
+    const best = [...v.entries()].sort((a,b) =>
+      caps(b[0]) - caps(a[0]) || b[1] - a[1] || a[0].localeCompare(b[0]))[0][0];
+    canon.set(k, best);
+  }
+  out.forEach(m => m.opp = canon.get(m.opp.toLowerCase()) || m.opp.trim());
+  out.sort((a,b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.opp.localeCompare(b.opp));
+  return out;
+}
+
+/* ═══ MISS PATTERN ══════════════════════════════════════
+   Shot Direction is on every shot row — Hit / Short / Long / Left / Right —
+   and nothing has ever read it. It turns out to be the most direct statement
+   in the file about where the strokes go.                                  */
+const DIRS = ['Hit','Short','Long','Left','Right'];
+
+function buildMiss(rows){
+  const by = {};
+  for(const r of rows){
+    const club = (r['Shot Club']||'').trim();
+    const dir  = (r['Shot Direction']||'').trim();
+    if(!club || club === 'P' || !DIRS.includes(dir)) continue;
+    const e = by[club] || (by[club] = { n:0, Hit:0, Short:0, Long:0, Left:0, Right:0 });
+    e[dir]++; e.n++;
+  }
+  const out = {};
+  for(const [club, e] of Object.entries(by)){
+    if(e.n < 25) continue;                       // too few to describe a pattern
+    out[club] = {
+      n: e.n,
+      pct: Object.fromEntries(DIRS.map(d => [d, +(100*e[d]/e.n).toFixed(1)])),
+      /* Short-vs-long and left-vs-right as single signed numbers, because the
+         question is which way you err, not the five-way split. */
+      shortBias: +(100*(e.Short - e.Long)/e.n).toFixed(1),
+      sideBias:  +(100*(e.Right - e.Left)/e.n).toFixed(1),
+    };
+  }
+  const tot = Object.values(by).reduce((a,e) => {
+    DIRS.forEach(d => a[d] = (a[d]||0) + e[d]); a.n = (a.n||0) + e.n; return a;
+  }, {});
+  return { clubs: out, overall: tot.n ? {
+    n: tot.n,
+    pct: Object.fromEntries(DIRS.map(d => [d, +(100*tot[d]/tot.n).toFixed(1)])),
+    shortBias: +(100*(tot.Short - tot.Long)/tot.n).toFixed(1),
+    sideBias:  +(100*(tot.Right - tot.Left)/tot.n).toFixed(1),
+  } : null };
+}
+
+/* ═══ APPROACH PROXIMITY ════════════════════════════════
+   The pin comes from the same putt chain used for putt distances: the last
+   putt's end. The approach is then the non-putt shot finishing nearest it —
+   which on a normal hole is the shot before you started putting.
+
+   Pins are filtered per hole against their own median position first. Across
+   holes with several located pins the scatter runs to 268 ft at the 90th
+   percentile, which is not a pin being moved on a green; it is the chain
+   picking a wrong terminal putt. Those get dropped rather than averaged in. */
+const PROX_BANDS = [[0,50,'under 50 yd'],[50,75,'50–75'],[75,100,'75–100'],
+                    [100,125,'100–125'],[125,150,'125–150'],[150,Infinity,'150 +']];
+
+function buildProximity(holeGeo){
+  const recs = [];
+  for(const h of holeGeo.values()){
+    if(!h.pin || !h.shots.length) continue;
+    let best = null, bestD = Infinity;
+    for(const s of h.shots){
+      const d = feetBetween(s.ey, s.ex, h.pin[0], h.pin[1]);
+      if(d < bestD){ bestD = d; best = s; }
+    }
+    if(!best || bestD > 300) continue;
+    recs.push({ club: best.club, yds: best.yds, prox: bestD });
+  }
+  if(recs.length < 25) return null;
+
+  const stat = v => ({ n: v.length,
+    median: +(v.slice().sort((a,b)=>a-b)[Math.floor(v.length/2)]).toFixed(0),
+    in10: +(100*v.filter(x=>x<10).length/v.length).toFixed(0),
+    in20: +(100*v.filter(x=>x<20).length/v.length).toFixed(0) });
+
+  const bands = PROX_BANDS.map(([lo,hi,label]) => {
+    const v = recs.filter(r => r.yds != null && r.yds >= lo && r.yds < hi).map(r=>r.prox);
+    return { label, ...(v.length ? stat(v) : { n:0, median:null, in10:null, in20:null }) };
+  });
+  const byClub = {};
+  for(const r of recs) (byClub[r.club] = byClub[r.club] || []).push(r.prox);
+  const clubs = Object.entries(byClub)
+    .filter(([,v]) => v.length >= 10)
+    .map(([club,v]) => ({ club, ...stat(v) }))
+    .sort((a,b) => a.median - b.median);
+
+  return { holes: recs.length, overall: stat(recs.map(r=>r.prox)), bands, clubs };
+}
+
+/* Pin per hole, from the chained putts, then sanity-checked against every
+   other pin found on that same course-and-hole. A pin more than 150 ft from
+   the median of its siblings is a bad chain, not a moved flag, and is dropped.
+   Also produces the green centre each hole's map is drawn around. */
+function buildHoleGeo(holeMap){
+  const TOL = 1.5;
+  const geo = new Map();
+  for(const [key, h] of holeMap){
+    let pin = null;
+    const u = [...new Map(h.putts.map(p => [p.join(','), p])).values()];
+    if(u.length){
+      const heads = u.filter(p => !u.some(q => q !== p && feetBetween(p[0],p[1],q[2],q[3]) < TOL));
+      const tails = u.filter(p => !u.some(q => q !== p && feetBetween(p[2],p[3],q[0],q[1]) < TOL));
+      if(heads.length === 1 && tails.length === 1) pin = [tails[0][2], tails[0][3]];
+    }
+    geo.set(key, { ...h, pin });
+  }
+  // second pass: reject pins that disagree with their own hole's median
+  const byHole = new Map();
+  for(const g of geo.values()){
+    if(!g.pin) continue;
+    const k = g.course + '#' + g.hole;
+    (byHole.get(k) || byHole.set(k, []).get(k)).push(g);
+  }
+  for(const [, list] of byHole){
+    if(list.length < 3) continue;
+    const med = i => {
+      const v = list.map(g => g.pin[i]).sort((a,b)=>a-b);
+      return v[Math.floor(v.length/2)];
+    };
+    const cy = med(0), cx = med(1);
+    for(const g of list){
+      if(feetBetween(cy, cx, g.pin[0], g.pin[1]) > 150) g.pin = null;
+    }
+  }
+  return geo;
+}
+
+/* ═══ SHOT MAPS ═════════════════════════════════════════
+   Every tracked shot, grouped by course and hole, so each hole can be drawn
+   with your shots laid over the aerial view.
+
+   Stored in its own table rather than alongside the aggregates: this is a few
+   hundred kilobytes against thirty for everything else, and the tracker should
+   not pull it on every page load just to show a putting table.
+
+   Indexed rather than repeated — club names and round dates are listed once and
+   referenced by number — which roughly halves it.                           */
+function buildShotMap(holeGeo){
+  const clubs = [], rounds = [], courses = new Map();
+  const clubIx = c => { let i = clubs.indexOf(c); if(i < 0){ clubs.push(c); i = clubs.length-1; } return i; };
+  const roundIx = r => { let i = rounds.indexOf(r); if(i < 0){ rounds.push(r); i = rounds.length-1; } return i; };
+
+  // Pin per course+hole: the median of the pins that survived the outlier pass.
+  const pinsBy = new Map();
+  for(const g of holeGeo.values()){
+    if(!g.pin || !g.course) continue;
+    const k = g.course + '#' + g.hole;
+    (pinsBy.get(k) || pinsBy.set(k, []).get(k)).push(g.pin);
+  }
+  const pinFor = k => {
+    const v = pinsBy.get(k);
+    if(!v || !v.length) return null;
+    const md = i => { const a = v.map(p=>p[i]).sort((x,y)=>x-y); return a[Math.floor(a.length/2)]; };
+    return [+md(0).toFixed(6), +md(1).toFixed(6)];  // the pin keeps full precision
+  };
+
+  for(const g of holeGeo.values()){
+    if(!g.course || !g.shots.length) continue;
+    let c = courses.get(g.course);
+    if(!c) courses.set(g.course, c = { name: g.course, holes: new Map(), tees: new Set() });
+    /* Pike Fold arrives as "Pike Fold Golf Club (Yellow and Red tees)" — strip
+       the club name back off so the label is the tee set, not a repetition. */
+    if(g.teeSet && g.teeSet !== g.course){
+      const trimmed = g.teeSet.replace(g.course, '').replace(/^[\s(–—-]+|[\s)]+$/g, '').trim();
+      if(trimmed) c.tees.add(trimmed);
+    }
+    let h = c.holes.get(g.hole);
+    if(!h) c.holes.set(g.hole, h = { h: g.hole, par: g.par || null, shots: [], sc: [] });
+    if(!h.par && g.par) h.par = g.par;
+    const ri = roundIx(g.round);
+    // What you actually took on the hole that day, so the map can report the
+    // score for whichever rounds are on screen rather than just the shots.
+    if(g.score && !h.sc.some(x => x[0] === ri)) h.sc.push([ri, g.score]);
+    for(const s of g.shots){
+      /* 5 decimal places is about a metre. Shots scatter by tens of metres, so
+         the sixth digit is storage spent on noise. */
+      h.shots.push([ri, clubIx(s.club),
+        +s.sy.toFixed(5), +s.sx.toFixed(5), +s.ey.toFixed(5), +s.ex.toFixed(5)]);
+    }
+  }
+
+  /* Rounds are indexed in the order the file happens to list them, and the
+     tracker reads "the last 10" as the last ten indices — so they have to come
+     out in date order or that window shows the wrong rounds. Sorted here and
+     the indices remapped, once, rather than sorted again on every draw.
+
+     Keyed on the full timestamp too, not the date: 14 Apr 2026 has two rounds
+     at Denton, and keying on the date alone merged them into one round holding
+     both sets of shots and only one of the two scores. */
+  const stamp = k => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})\s*(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)?/i.exec(k);
+    if(!m) return k.slice(0,10) + ' 00:00';
+    let hh = +m[4] % 12;
+    if(/pm/i.test(m[7] || '')) hh += 12;
+    return `${m[1]}-${m[2]}-${m[3]} ${String(hh).padStart(2,'0')}:${m[5]}`;
+  };
+  const order = rounds.map((k,i) => [stamp(k), i]).sort((a,b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
+  const remap = new Array(rounds.length);
+  order.forEach(([, oldIx], newIx) => { remap[oldIx] = newIx; });
+
+  /* Two rounds on one day need telling apart on the map, so the second gets a
+     suffix. Everything else stays a plain date, which is what the tracker
+     prints. */
+  const perDay = {};
+  order.forEach(([, oldIx]) => { const d = rounds[oldIx].slice(0,10); perDay[d] = (perDay[d] || 0) + 1; });
+  const nth = {}, ORD = ['','1st','2nd','3rd','4th','5th'];
+  const labels = new Array(rounds.length);
+  order.forEach(([, oldIx], newIx) => {
+    const d = rounds[oldIx].slice(0,10);
+    nth[d] = (nth[d] || 0) + 1;
+    labels[newIx] = perDay[d] > 1 ? `${d} (${ORD[nth[d]] || nth[d] + 'th'} round)` : d;
+  });
+
+  const out = [...courses.values()]
+    .map(c => ({
+      name: c.name,
+      tees: [...c.tees],
+      holes: [...c.holes.values()]
+        .sort((a,b) => a.h - b.h)
+        .map(h => ({
+          ...h,
+          shots: h.shots.map(s => [remap[s[0]], s[1], s[2], s[3], s[4], s[5]])
+                        .sort((a,b) => a[0] - b[0]),
+          sc: h.sc.map(([ri,v]) => [remap[ri], v]).sort((a,b) => a[0] - b[0]),
+          pin: pinFor(c.name + '#' + h.h),
+        })),
+    }))
+    .filter(c => c.holes.length)
+    .sort((a,b) => b.holes.reduce((n,h)=>n+h.shots.length,0) - a.holes.reduce((n,h)=>n+h.shots.length,0));
+
+  if(!out.length) return null;
+  return { v: 2, generated: new Date().toISOString(), clubs, rounds: labels, courses: out };
+}
+
+/* ═══ TIME OF DAY ═══════════════════════════════════════ */
+function buildDaypart(rows, meKey){
+  /* Only rounds with all 18 holes scored. Round Score is a running total, so a
+     round abandoned after nine sits in the file as a 55 — averaged against full
+     rounds that invents a seven-shot advantage for whichever tee time happens
+     to hold the short ones. */
+  const holesScored = new Map();
+  for(const r of rows){
+    const dt = parseDate(r['Round DateTime (UTC)']); if(!dt) continue;
+    const hs = parseInt(r['Hole Score'], 10);
+    const set = holesScored.get(dt.key) || holesScored.set(dt.key, new Set()).get(dt.key);
+    if(Number.isFinite(hs) && hs > 0) set.add(r['Hole Number']);
+  }
+  const seen = new Map();
+  for(const r of rows){
+    const dt = parseDate(r['Round DateTime (UTC)']); if(!dt) continue;
+    if(seen.has(dt.key)) continue;
+    if((holesScored.get(dt.key) || new Set()).size < 18) continue;
+    const m = /(\d{1,2}):(\d{2}):\d{2}\s*(AM|PM)/i.exec(r['Round DateTime (UTC)'] || '');
+    const score = parseInt(r['Round Score'], 10);
+    const putts = parseInt(r['Round Putts'], 10);
+    if(!m || !Number.isFinite(score) || score <= 0) continue;
+    let hr = parseInt(m[1], 10) % 12;
+    if(/PM/i.test(m[3])) hr += 12;
+    seen.set(dt.key, { hr, score, putts: Number.isFinite(putts) ? putts : null });
+  }
+  const rounds = [...seen.values()];
+  if(rounds.length < 20) return null;
+  const buckets = [[0,10,'Before 10am'],[10,13,'10am – 1pm'],[13,24,'After 1pm']];
+  return {
+    rounds: rounds.length,
+    buckets: buckets.map(([lo,hi,label]) => {
+      const v = rounds.filter(r => r.hr >= lo && r.hr < hi);
+      return { label, n: v.length,
+        score: v.length ? +(mean(v.map(r=>r.score))).toFixed(1) : null,
+        putts: v.filter(r=>r.putts).length ? +(mean(v.filter(r=>r.putts).map(r=>r.putts))).toFixed(1) : null };
+    }),
+  };
+}
+
+function buildStats(allRows){
+  /* The export carries playing partners' scorecards as well as your own — same
+     rounds, same holes, a Name column to tell them apart. Their rows have no
+     shot tracking, so club distances were never affected, but they do carry
+     Hole Putts, and a hole keyed without the name takes whichever row came
+     first. Filter to the dominant name (trimmed and case-folded, since the same
+     person appears as both "Adam Baker" and "Adam baker "). */
+  const tally = new Map();
+  for(const r of allRows){
+    const n = (r['Name'] || '').trim();
+    if(!n) continue;
+    const k = n.toLowerCase();
+    const e = tally.get(k) || { label: n, count: 0 };
+    e.count++; tally.set(k, e);
+  }
+  const ranked = [...tally.values()].sort((a,b) => b.count - a.count);
+  const me = ranked[0] ? ranked[0].label : null;
+  const meKey = me ? me.toLowerCase() : null;
+  const rows = meKey
+    ? allRows.filter(r => (r['Name']||'').trim().toLowerCase() === meKey)
+    : allRows;
+  const players = {
+    me, kept: rows.length, ignored: allRows.length - rows.length,
+    others: ranked.slice(1).map(p => p.label),
+  };
+
+  const h2h = buildH2H(allRows, meKey);
+
+  /* Hole-level scorecard facts plus any GPS putt strokes on that hole. */
+  const holeMap = new Map();
+  const shotSeen = new Set();
+  for(const r of rows){
+    const dt = parseDate(r['Round DateTime (UTC)']); if(!dt) continue;
+    const hn = r['Hole Number']; if(!hn) continue;
+    const key = dt.key + '#' + hn;
+    let h = holeMap.get(key);
+    if(!h){
+      const cp = parseInt(r['Hole Putts'], 10);
+      /* Facility Name is the club; Course Name is whatever Golfshot felt like —
+         for three of these it holds the tee set instead ("Yellow Tees" for
+         Whitefield, "Winter Tees" for Brampton). The club is the identity;
+         the tee set is kept alongside as a label. */
+      h = { round: dt.key, yr: dt.y,
+            course: ((r['Facility Name']||'').trim() || (r['Course Name']||'').trim()),
+            teeSet: (r['Course Name']||'').trim(),
+            hole: parseInt(hn,10),
+            par: parseInt(r['Hole Par'],10) || null,
+            score: parseInt(r['Hole Score'],10) || null,
+            cardPutts: Number.isFinite(cp) ? cp : null, putts: [], shots: [],
+            gir: (r['Hole GIR']||'').trim().toLowerCase(),
+            fairwayType: (r['Hole Fairway Hit Type']||'').trim().toLowerCase() };
+      holeMap.set(key, h);
+    }
+    const club = (r['Shot Club']||'').trim();
+    const a = parseFloat(r['Shot Start Latitude']), b = parseFloat(r['Shot Start Longitude']);
+    const c = parseFloat(r['Shot End Latitude']),   e = parseFloat(r['Shot End Longitude']);
+    if([a,b,c,e].some(v => !isFinite(v) || v === 0)) continue;
+    if(club === 'P') h.putts.push([a,b,c,e]);
+    else if(club){
+      /* The export repeats shots — the same club over the same ground, listed
+         twice on one hole, often as the whole hole block mirrored. Left in they
+         draw every line twice on the map and make a three-shot hole look like
+         six. Matched on five decimal places, about a metre: the repeats agree
+         to roughly there and then drift in the last digits, so comparing the
+         raw numbers catches only a fraction of them. */
+      const r5 = v => v.toFixed(5);
+      const sig = key + '|' + club + '|' + r5(a) + '|' + r5(b) + '|' + r5(c) + '|' + r5(e);
+      if(shotSeen.has(sig)) continue;
+      shotSeen.add(sig);
+      h.shots.push({ club, sy:a, sx:b, ey:c, ex:e, yds: parseFloat(r['Yardage']) || null });
+    }
+  }
+  const puttDist = buildPuttDistances(holeMap);
+  const sg       = buildStrokesGained(holeMap);
+  const holeGeo  = buildHoleGeo(holeMap);
+  const prox     = buildProximity(holeGeo);
+  const miss     = buildMiss(rows);
+  const daypart  = buildDaypart(rows, meKey);
+  const shotMap  = buildShotMap(holeGeo);
+
+  const shots = [];
+  for(const r of rows){
+    const club = (r['Shot Club']||'').trim();
+    const yd   = (r['Yardage']||'').trim();
+    if(!club || club === 'P' || !yd) continue;
+    const y = parseFloat(yd); if(!isFinite(y) || y <= 0) continue;
+    const d = parseDate(r['Round DateTime (UTC)']); if(!d) continue;
+    shots.push({ club, y, mo:d.mo, yr:d.y, round:d.key });
+  }
+  if(!shots.length) throw new Error('No shot rows found — is this the Rounds export?');
+
+  /* Baselines come from ALL the data and stay fixed, so a single year's
+     figures read against your long-run normal. Rebasing per year would make
+     every year average 100% and quietly delete the year-on-year comparison. */
+  const byClub = {};
+  shots.forEach(s => (byClub[s.club] = byClub[s.club] || []).push(s.y));
+  const p90 = {};
+  for(const [c,v] of Object.entries(byClub)) if(v.length >= 10) p90[c] = quantile([...v].sort((a,b)=>a-b), .9);
+  const isFull = s => SWING_CLUBS.has(s.club) && p90[s.club] && s.y >= 0.70 * p90[s.club];
+
+  const allFull = shots.filter(isFull);
+  const fullBase = {}, fullBy = {};
+  allFull.forEach(s => (fullBy[s.club] = fullBy[s.club] || []).push(s.y));
+  for(const [c,v] of Object.entries(fullBy)) fullBase[c] = mean(v);
+
+  /* One slice per year plus "all" — same maths, different subset. */
+  function slice(sub){
+    const roundKeys = [...new Set(sub.map(s=>s.round))].sort();
+    const windowSet = n => n ? new Set(roundKeys.slice(-n)) : null;
+
+    const clubs = {};
+    for(const code of Object.keys(NAME)){
+      clubs[code] = {};
+      for(const w of [1,5,10,20,0]){
+        const set = windowSet(w);
+        const v = tukey(sub.filter(s => s.club === code && (!set || set.has(s.round))).map(s=>s.y));
+        clubs[code][w] = v.length ? [Math.round(mean(v)), v.length] : [null, 0];
+      }
+    }
+
+    const full = sub.filter(isFull);
+
+    /* The same table again, but full swings only. `clubs` above is every shot
+       hit with the club, which is the right number for "how far does my 7 iron
+       go when I hit it" only if you never punch one. For the wedges it is not
+       close: chips drag the sand wedge to 31 yards and the lob wedge to 30, so
+       a bag-gapping view built on it says they are the same club when in fact
+       it has never seen either of them hit properly. */
+    const fullClubs = {};
+    for(const code of Object.keys(NAME)){
+      fullClubs[code] = {};
+      for(const w of [1,5,10,20,0]){
+        const set = windowSet(w);
+        const v = tukey(full.filter(s => s.club === code && (!set || set.has(s.round))).map(s=>s.y));
+        fullClubs[code][w] = v.length ? [Math.round(mean(v)), v.length] : [null, 0];
+      }
+    }
+
+    /* The five most recent rounds on their own, so a single day can be looked
+       at rather than only averages that have already absorbed it. Full swings
+       only, same as the ladder: on one round a club might be swung twice, and
+       one of those a punch-out under a tree would halve it.
+
+       Tukey is deliberately not applied here — with two or three shots there is
+       no distribution to find an outlier in, and trimming would just delete the
+       shot furthest from the other two. The counts travel with the numbers so a
+       yardage resting on one swing is visible as one swing. */
+    const recent = roundKeys.slice(-5).reverse().map(rk => {
+      const per = {};
+      for(const code of Object.keys(NAME)){
+        const v = full.filter(s => s.club === code && s.round === rk).map(s => s.y);
+        if(v.length) per[code] = [Math.round(mean(v)), v.length];
+      }
+      return { round: rk.slice(0,10), clubs: per,
+               shots: Object.values(per).reduce((a,c) => a + c[1], 0) };
+    }).filter(r => r.shots);
+
+    const season = {};
+    for(let m=1;m<=12;m++){
+      const v = full.filter(s => s.mo === m && POOL_CLUBS.has(s.club)).map(s => s.y / fullBase[s.club]);
+      season[m] = v.length ? [+(100*mean(v)).toFixed(1), v.length] : [null, 0];
+    }
+
+    const grid = {};
+    for(const c of SWING_CLUBS){
+      if(!fullBase[c]) continue;
+      const any = full.some(s => s.club === c);
+      if(!any) continue;
+      grid[c] = { base: Math.round(fullBase[c]) };
+      for(let m=1;m<=12;m++){
+        const v = full.filter(s => s.club === c && s.mo === m).map(s=>s.y);
+        grid[c][m] = v.length ? [Math.round(mean(v)), v.length, +(100*(mean(v)/fullBase[c] - 1)).toFixed(1)] : null;
+      }
+    }
+
+    const idxAll = full.filter(s => POOL_CLUBS.has(s.club)).map(s => s.y / fullBase[s.club]);
+
+    return {
+      rounds: roundKeys.length,
+      shots: sub.length,
+      fullShots: full.length,
+      index: idxAll.length ? +(100*mean(idxAll)).toFixed(1) : null,
+      clubs, fullClubs, recent, season, grid,
+    };
+  }
+
+  const years = [...new Set(shots.map(s=>s.yr))].sort((a,b)=>b-a);
+  const byYear = { all: slice(shots) };
+  years.forEach(y => byYear[y] = slice(shots.filter(s => s.yr === y)));
+
+  /* "In the bag" is inferred, not configured: anything swung in the last 20
+     rounds. Long enough that a club you rarely need still counts, short enough
+     that one you have stopped carrying drops out. */
+  const allRounds = [...new Set(shots.map(s=>s.round))].sort();
+  const recent = new Set(allRounds.slice(-20));
+  const bag = [...new Set(shots.filter(s => recent.has(s.round)).map(s => s.club))];
+
+  return {
+    shotMap,          // stripped out before the aggregates are saved
+    roundsForSave: buildRoundsForSave(holeMap),   // also stripped out before saving aggregates
+    v: 3,
+    generated: new Date().toISOString(),
+    years, bag, bagRounds: Math.min(20, allRounds.length), puttDist, players, h2h, miss, prox, daypart, sg,
+    rounds: byYear.all.rounds,
+    shots: byYear.all.shots,
+    byYear,
+  };
+}
+
+/* ═══ RENDER ════════════════════════════════════════════ */
+let DATA = null, MIN_N = 8, SHOW_YARDS = false, YEAR = 'all', BAG_ONLY = true;
+const cur = () => DATA.byYear[YEAR] || DATA.byYear.all;
+
+/* CLUBS, optionally narrowed to what is still being carried. */
+function clubSections(){
+  const bag = DATA.bag;
+  if(!BAG_ONLY || !bag || !bag.length) return CLUBS;
+  const set = new Set(bag);
+  return CLUBS.map(([sec, list]) => [sec, list.filter(([c]) => set.has(c))])
+              .filter(([, list]) => list.length);
+}
+
+function toggleBag(btn){
+  BAG_ONLY = !BAG_ONLY;
+  btn.textContent = BAG_ONLY ? 'In the bag' : 'All clubs';
+  btn.classList.toggle('on', BAG_ONLY);
+  renderMain(); renderGrid(); renderYoY();
+}
+
+function renderYearChips(){
+  const years = DATA.years || [];
+  document.getElementById('year-chips').innerHTML =
+    [['all','All years'], ...years.map(y=>[String(y), String(y)])]
+      .map(([k,label])=>{
+        const s = DATA.byYear[k];
+        const n = s ? s.rounds : 0;
+        return `<button class="chip${k===YEAR?' on':''}" onclick="setYear('${k}')"
+          ${s ? `data-tip="${label}|${n} rounds|${s.fullShots.toLocaleString()} full swings"` : 'disabled'}
+          >${label}</button>`;
+      }).join(' ');
+  const s = cur();
+  document.getElementById('year-note').textContent =
+    `${s.rounds} rounds · ${s.shots.toLocaleString()} shots` +
+    (YEAR !== 'all' && s.index !== null ? ` · overall ${s.index > 100 ? '+' : ''}${(s.index-100).toFixed(1)}% vs your all-time normal` : '');
+}
+
+function setYear(k){
+  YEAR = k;
+  renderYearChips(); renderMain(); renderSeason(); renderGrid();
+}
+
+function renderMain(){
+  const d = cur();
+  let html = '';
+  for(const [sec, list] of clubSections()){
+    html += `<tr class="sec-label"><td colspan="5">${sec}</td></tr>`;
+    for(const [code, label] of list){
+      const c = d.clubs[code] || {};
+      html += `<tr><td class="club">${label}</td>`;
+      for(const w of [5,10,20,0]){
+        const [v, n] = c[w] || [null, 0];
+        html += v === null ? `<td class="num dash">—</td>`
+                           : `<td class="num">${v}<span class="n">n=${n}</span></td>`;
+      }
+      html += `</tr>`;
+    }
+  }
+  document.getElementById('tbody-main').innerHTML = html;
+  document.getElementById('main-sub').textContent =
+    `yards · ${d.rounds} rounds${YEAR==='all' ? '' : ' in ' + YEAR}`;
+}
+
+function renderSeason(){
+  const d = cur(), ref = DATA.byYear.all.season;
+  const pool = [...Object.values(d.season), ...Object.values(ref)]
+    .filter(x=>x[0]!==null).map(x=>x[0]);
+  const span = Math.max(6, ...pool.map(v=>Math.abs(v-100))) * 1.15;
+  let html = '';
+  for(let m=1;m<=12;m++){
+    const [pct, n] = d.season[m];
+    html += `<div class="bar-lbl">${MONTHS[m-1]}</div>`;
+    if(pct === null){
+      html += `<div class="bar-track"><div class="bar-mid"></div>
+        <span class="bar-val" style="left:calc(50% + 8px);color:var(--faint)">no data</span></div>`;
+      continue;
+    }
+    const diff = pct - 100, w = Math.abs(diff) / span * 50, up = diff >= 0;
+    const style = up ? `left:50%;width:${w}%` : `right:50%;width:${w}%`;
+    const lblStyle = up ? `left:calc(50% + ${w}% + 6px)` : `right:calc(50% + ${w}% + 6px)`;
+    // In a single-year view, mark where all years together sit for that month,
+    // so the year reads against the long-run pattern rather than in isolation.
+    let mark = '', refTxt = '';
+    if(YEAR !== 'all' && ref[m] && ref[m][0] !== null){
+      const rd = ref[m][0] - 100;
+      mark = `<div class="bar-ref" style="left:${(50 + rd/span*50).toFixed(2)}%"></div>`;
+      refTxt = `|all years ${rd>=0?'+':''}${rd.toFixed(1)}%`;
+    }
+    html += `<div class="bar-track" data-tip="${MONTHS[m-1]}${YEAR==='all'?'':' '+YEAR}|${diff>=0?'+':''}${diff.toFixed(1)}% vs normal · ${n} full swings${refTxt}">
+      <div class="bar-mid"></div>
+      <div class="bar-fill ${up?'up':'dn'}" style="${style}"></div>${mark}
+      <span class="bar-val" style="${lblStyle}">${diff>=0?'+':''}${diff.toFixed(1)}% <span style="color:var(--faint);font-weight:400">(${n})</span></span>
+    </div>`;
+  }
+  document.getElementById('bars').innerHTML = html;
+  document.getElementById('ref-key').classList.toggle('hide', YEAR === 'all');
+}
+
+function bucket(delta){
+  const a = Math.abs(delta);
+  const step = a < 1 ? 0 : a < 3 ? 1 : a < 6 ? 2 : 3;
+  if(step === 0) return 'var(--dv-0)';
+  return `var(--dv-${delta > 0 ? 'u' : 'd'}${step})`;
+}
+
+function renderGrid(){
+  const d = cur();
+  const head = ['<th>Club</th>', '<th class="num">Avg</th>']
+    .concat(MONTHS.map(m=>`<th class="num">${m}</th>`)).join('');
+  document.getElementById('grid-head').innerHTML = head;
+
+  let html = '';
+  for(const [sec, list] of clubSections()){
+    const present = list.filter(([c]) => d.grid[c]);
+    if(!present.length) continue;
+    html += `<tr class="sec-label"><td colspan="14">${sec}</td></tr>`;
+    for(const [code, label] of present){
+      const g = d.grid[code];
+      html += `<tr><td class="club">${label}</td><td class="num">${g.base}<span class="n">avg</span></td>`;
+      for(let m=1;m<=12;m++){
+        const cell = g[m];
+        if(!cell){ html += `<td class="cell empty">·</td>`; continue; }
+        const [avg, n, delta] = cell;
+        const thin = n < MIN_N ? ' thin' : '';
+        const txt = SHOW_YARDS ? avg : `${delta>0?'+':''}${Math.round(delta)}`;
+        html += `<td class="cell${thin}" style="background:${bucket(delta)}"
+          data-tip="${label} · ${MONTHS[m-1]}|${avg} yds (${delta>0?'+':''}${delta.toFixed(1)}% vs its ${g.base} avg)|${n} full swings">${txt}</td>`;
+      }
+      html += `</tr>`;
+    }
+  }
+  document.getElementById('tbody-grid').innerHTML = html;
+
+  document.getElementById('scale').innerHTML =
+    `<span style="margin-right:.2rem">Shorter</span>` +
+    ['d3','d2','d1','0','u1','u2','u3'].map(k=>`<i style="background:var(--dv-${k})"></i>`).join('') +
+    `<span style="margin-left:.2rem">Longer</span>` +
+    `<span style="margin-left:.8rem;color:var(--faint)">±1% · ±3% · ±6%+</span>`;
+}
+
+/* ═══ YEAR ON YEAR ═════════════════════════════════════
+   Computed from the per-year grid already in the payload, so
+   changing years costs nothing and needs no re-upload.
+   ═══════════════════════════════════════════════════════ */
+let MIN_Y = 8;
+
+function setMinY(n, btn){
+  MIN_Y = n;
+  document.querySelectorAll('#card-yoy .chip').forEach(c=>c.classList.remove('on'));
+  btn.classList.add('on');
+  renderYoY();
+}
+
+function matchedMonths(a, b, code){
+  const A = ((DATA.byYear[a]||{}).grid||{})[code], B = ((DATA.byYear[b]||{}).grid||{})[code];
+  if(!A || !B) return [];
+  const out = [];
+  for(let m=1;m<=12;m++){
+    const ca = A[m], cb = B[m];
+    if(ca && cb && ca[1] >= MIN_Y && cb[1] >= MIN_Y) out.push({ m, a:ca[0], b:cb[0], na:ca[1], nb:cb[1] });
+  }
+  return out;
+}
+
+function renderYoY(){
+  const a = document.getElementById('yoy-a').value;
+  const b = document.getElementById('yoy-b').value;
+  document.getElementById('yoy-ha').textContent = a;
+  document.getElementById('yoy-hb').textContent = b;
+
+  /* Every club gets a row. A club that cannot be compared says why — whether it
+     left the bag, joined it, or simply never got enough swings in a shared month
+     is worth knowing, and a silently missing row tells you none of that. */
+  const rows = [];
+  for(const [sec, list] of clubSections()){
+    for(const [code, label] of list){
+      const inA = !!((DATA.byYear[a]||{}).grid||{})[code];
+      const inB = !!((DATA.byYear[b]||{}).grid||{})[code];
+      const ms = (inA && inB) ? matchedMonths(a, b, code) : [];
+      if(ms.length){
+        const diffs = ms.map(x => x.b - x.a);
+        rows.push({ sec, label, ms, diffs,
+          avgA: mean(ms.map(x=>x.a)), avgB: mean(ms.map(x=>x.b)), diff: mean(diffs) });
+      }else{
+        const why = !inA && !inB ? `Not used in either year`
+                  : !inA ? `Not used in ${a} — new to the bag`
+                  : !inB ? `Not used in ${b} — out of the bag`
+                  : `Used in both years, but never ${MIN_Y}+ full swings in the same month`;
+        rows.push({ sec, label, empty:true, why, inA, inB });
+      }
+    }
+  }
+
+  const cmp = rows.filter(r=>!r.empty);
+  const scale = Math.max(10, ...cmp.map(r=>Math.abs(r.diff)), 10);
+  let html = '', lastSec = null;
+  for(const r of rows){
+    if(r.sec !== lastSec){ html += `<tr class="sec-label"><td colspan="5">${r.sec}</td></tr>`; lastSec = r.sec; }
+    if(r.empty){
+      const gone = /out of the bag|new to the bag/.test(r.why);
+      html += `<tr><td class="club" style="opacity:.55">${r.label}</td>
+        <td class="num dash">—</td><td class="num dash">—</td><td class="num dash">—</td>
+        <td style="font-size:.72rem;color:var(--muted)">${gone?'<b style="color:var(--amber)">•</b> ':''}${r.why}</td></tr>`;
+      continue;
+    }
+    const w = Math.abs(r.diff) / scale * 50, up = r.diff >= 0;
+    const bar = `<div class="diff-bar"><u></u><i class="${up?'up':'dn'}" style="${up?`left:50%`:`right:50%`};width:${w}%;background:var(${up?'--pole-up':'--pole-dn'})"></i></div>`;
+    const pills = r.ms.map(x=>{
+      const d = x.b - x.a;
+      return `<span class="mon-pill ${d>0?'up':d<0?'dn':''}"
+        data-tip="${r.label} · ${MONTHS[x.m-1]}|${a}: ${x.a} yds (${x.na} shots)|${b}: ${x.b} yds (${x.nb} shots)"
+        >${MONTHS[x.m-1]} ${d>0?'+':''}${Math.round(d)}</span>`;
+    }).join('');
+    html += `<tr>
+      <td class="club">${r.label}</td>
+      <td class="num">${Math.round(r.avgA)}</td>
+      <td class="num">${Math.round(r.avgB)}</td>
+      <td class="num"><div class="diff">${bar}<span class="diff-val" style="color:var(${up?'--pole-up':'--pole-dn'})">${r.diff>0?'+':''}${r.diff.toFixed(1)}</span></div>
+        <span class="n" style="display:block;font-size:.58rem;color:var(--faint);text-align:center">${r.ms.length} month${r.ms.length>1?'s':''}</span></td>
+      <td>${pills}</td>
+    </tr>`;
+  }
+  document.getElementById('tbody-yoy').innerHTML = html;
+
+  // Headline, with the scatter shown next to it rather than buried.
+  const allDiffs = cmp.flatMap(r=>r.diffs);
+  if(!allDiffs.length){
+    document.getElementById('yoy-summary').innerHTML =
+      `<p class="note">No club has a month in both ${a} and ${b} with at least ${MIN_Y} full swings on
+       each side. Lower the minimum, or pick a different pair of years.</p>`;
+    return;
+  }
+  const overall = mean(allDiffs);
+  const sd = allDiffs.length > 1
+    ? Math.sqrt(allDiffs.reduce((s,d)=>s+(d-overall)**2,0)/(allDiffs.length-1)) : 0;
+  const noisy = Math.abs(overall) < sd / Math.sqrt(allDiffs.length) * 2;
+  document.getElementById('yoy-summary').innerHTML = `
+    <div class="tile">
+      <div><div class="k">Like-for-like change</div>
+        <div class="v" style="color:var(${overall>=0?'--pole-up':'--pole-dn'})">${overall>0?'+':''}${overall.toFixed(1)} yds</div>
+        <div class="s">${a} → ${b}, averaged over every matched club-month</div></div>
+      <div><div class="k">Comparisons</div>
+        <div class="v">${allDiffs.length}</div>
+        <div class="s">${cmp.length} of ${rows.length} clubs · ${MIN_Y}+ shots each side</div></div>
+      <div><div class="k">Month-to-month spread</div>
+        <div class="v">±${sd.toFixed(0)} yds</div>
+        <div class="s">standard deviation between comparisons</div></div>
+    </div>
+    ${noisy ? `<p class="note" style="margin-top:.7rem"><b>Read this as "no clear change".</b>
+      The spread between individual comparisons is wide relative to the average, so a difference
+      this size is what you would expect from normal round-to-round variation rather than from
+      the swing itself.</p>` : ''}`;
+}
+
+function setMinN(n, btn){
+  MIN_N = n;
+  document.querySelectorAll('#card-grid .ctrl .chip').forEach(c=>{ if(c.id!=='view-btn') c.classList.remove('on'); });
+  btn.classList.add('on');
+  if(DATA) renderGrid();
+}
+function toggleView(btn){
+  SHOW_YARDS = !SHOW_YARDS;
+  btn.textContent = SHOW_YARDS ? 'Show as % difference' : 'Show as yardages';
+  btn.classList.toggle('on', SHOW_YARDS);
+  if(DATA) renderGrid();
+}
+
+/* Payloads written before the per-year rewrite have no byYear — wrap them so
+   an older saved row still renders instead of throwing. */
+function migrate(d){
+  if(d && d.byYear) return d;
+  return { v:2, generated:d.generated, years:[], rounds:d.rounds, shots:d.shots,
+           byYear:{ all:{ rounds:d.rounds, shots:d.shots, fullShots:d.fullShots||0,
+                          index:null, clubs:d.clubs, season:d.season, grid:d.grid } } };
+}
+
+function renderAll(d){
+  DATA = migrate(d);
+  if(!DATA.byYear[YEAR]) YEAR = 'all';
+  // A payload saved before bag detection existed cannot filter — say so on the
+  // control rather than leaving it claiming a filter it is not applying.
+  const bagBtn = document.getElementById('bag-btn');
+  if(!DATA.bag || !DATA.bag.length){
+    BAG_ONLY = false; bagBtn.disabled = true; bagBtn.classList.remove('on');
+    bagBtn.textContent = 'All clubs'; bagBtn.title = 'Re-drop your export to detect your current bag';
+  }else{
+    bagBtn.disabled = false; bagBtn.title = `Clubs swung in your last ${DATA.bagRounds} rounds`;
+  }
+  renderYearChips(); renderMain(); renderSeason(); renderGrid();
+  ['card-year','card-main','card-season','card-grid'].forEach(id=>document.getElementById(id).classList.remove('hide'));
+
+
+
+  // Year-on-year needs at least two years to say anything.
+  const ys = (DATA.years || []).slice();
+  if(ys.length >= 2){
+    const opts = ys.map(y=>`<option value="${y}">${y}</option>`).join('');
+    const selA = document.getElementById('yoy-a'), selB = document.getElementById('yoy-b');
+    selA.innerHTML = opts; selB.innerHTML = opts;
+    selA.value = String(ys[1]);   // older
+    selB.value = String(ys[0]);   // newer
+    renderYoY();
+    document.getElementById('card-yoy').classList.remove('hide');
+  }else{
+    document.getElementById('card-yoy').classList.add('hide');
+  }
+}
+
+/* ═══ TOOLTIP ═══════════════════════════════════════════ */
+const tip = document.getElementById('tip');
+document.addEventListener('mouseover', e=>{
+  const el = e.target.closest('[data-tip]'); if(!el) return;
+  const [a,b,c] = el.dataset.tip.split('|');
+  tip.innerHTML = `<b>${a}</b><br>${b}${c?`<br>${c}`:''}`;
+  tip.style.opacity = '1';
+});
+document.addEventListener('mousemove', e=>{
+  if(tip.style.opacity !== '1') return;
+  const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = e.clientX + pad, y = e.clientY + pad;
+  if(x + w > innerWidth - 8) x = e.clientX - w - pad;
+  if(y + h > innerHeight - 8) y = e.clientY - h - pad;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+});
+document.addEventListener('mouseout', e=>{
+  if(e.target.closest('[data-tip]')) tip.style.opacity = '0';
+});
+
+/* ═══ STATUS ════════════════════════════════════════════ */
+function setStatus(kind, text){
+  document.querySelector('#status .dot').className = 'dot ' + kind;
+  document.getElementById('status-txt').innerHTML = text;
+}
+function when(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+}
+
+/* ═══ FILE INTAKE ═══════════════════════════════════════ */
+const drop = document.getElementById('drop'), fileInput = document.getElementById('file');
+drop.addEventListener('click', ()=>fileInput.click());
+drop.addEventListener('dragover', e=>{ e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', ()=>drop.classList.remove('over'));
+drop.addEventListener('drop', e=>{
+  e.preventDefault(); drop.classList.remove('over');
+  if(e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e=>{ if(e.target.files[0]) handle(e.target.files[0]); });
+
+// Auto-adds any course found in the imported shots that isn't already on
+// this account's Courses list — marked played (you clearly played there,
+// there are shots to prove it), with no location yet. The user fills that
+// in themselves on the Courses page, since a course name alone isn't
+// enough to place a pin on the map.
+async function syncCoursesFromImport(courseNames) {
+  if (!courseNames || !courseNames.length) return { added: 0 };
+  let existing = [];
+  try {
+    const r = await fetch(`${REST_URL}/courses?select=id,name`, { headers: authHeaders() });
+    if (r.ok) existing = await r.json();
+  } catch (e) { console.warn('[COURSES] could not check existing courses —', e.message); }
+
+  // A course can already be fully tracked purely through having rounds
+  // against it — a home course especially, which never needs a row here
+  // at all to accumulate rounds and stats. Checking the courses table
+  // alone missed that entirely and kept re-adding a useless duplicate
+  // entry for it on every import, with no rounds or stats of its own.
+  let roundCourseKeys = new Set();
+  try {
+    const r = await fetch(`${REST_URL}/rounds?select=course`, { headers: authHeaders() });
+    if (r.ok) roundCourseKeys = new Set((await r.json()).map(x => x.course).filter(Boolean));
+  } catch (e) { console.warn('[COURSES] could not check existing rounds —', e.message); }
+
+  const existingNames = new Set(existing.map(c => (c.name || '').trim().toLowerCase()));
+  const seen = new Set();
+  const toAdd = courseNames.filter(n => {
+    if (!n) return false;
+    const k = n.trim().toLowerCase();
+    if (existingNames.has(k) || seen.has(k)) return false;
+    if (roundCourseKeys.has(slugCourse(n))) return false;
+    seen.add(k);
+    return true;
+  });
+
+  let added = 0;
+  for (const name of toAdd) {
+    try {
+      const r = await fetch(`${REST_URL}/courses`, {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          user_id: currentUser().id, name, played: true,
+          notes: 'Auto-added from a Club Distance import — add its location on the Courses page.',
+        }),
+      });
+      if (r.ok) added++;
+    } catch (e) { console.warn('[COURSES] failed to add', name, e.message); }
+  }
+  return { added };
+}
+
+// Turns the same holeMap already built for club-distance stats into
+// records shaped for the rounds table — reusing the identical hole data
+// rather than re-parsing the file a second time. No stroke index here
+// (this export doesn't carry one), so courses learned this way come in
+// unrated with a placeholder sequential SI, same convention as the
+// tracker's own bulk importer, until a real scorecard email tops it up.
+//
+// Tee club: the export never numbers shots, and "last row in the file"
+// only holds as a rule when a hole's shot log is complete (see the export
+// notes) — a hole missing its putt rows can come out in normal forward
+// order instead, which named the approach club as the tee shot on real
+// holes here. This uses the actual documented method instead: chain each
+// hole's deduped shots end-to-start (15 ft tolerance, same as strokes
+// gained) — the chain's own head is unambiguously the tee shot, no
+// row-order assumption needed. That resolves ~57% of hole-rounds outright.
+// For the rest, the tee doesn't move: the median start position of every
+// chain-confirmed tee shot on that exact hole becomes a reference point,
+// and any remaining shot starting within 120 ft of it is the drive. Holes
+// that clear neither test are left blank rather than guessed.
+function buildRoundsForSave(holeMap) {
+  const SHOT_TOL = 15, TEE_TOL = 120;
+  const runsInto = (a, b) => feetBetween(a.ey, a.ex, b.sy, b.sx) < SHOT_TOL;
+
+  // Pass 1 — chain every hole's shots; keep the head (tee shot) wherever
+  // the chain covers every shot cleanly, and its position for the fallback.
+  const chained = new Map();          // hole object -> club (keyed by reference, not a rebuilt string)
+  const teePosByCourseHole = new Map(); // "course#hole" -> [[lat,lng], ...]
+  for (const h of holeMap.values()) {
+    const S = h.shots;
+    if (!S || !S.length) continue;
+    let headIdx = null;
+    if (S.length === 1) headIdx = 0;
+    else {
+      const ix = S.map((_, i) => i);
+      const heads = ix.filter(i => !ix.some(j => j !== i && runsInto(S[j], S[i])));
+      if (heads.length === 1) {
+        const seq = [heads[0]], left = new Set(ix); left.delete(heads[0]);
+        for (;;) {
+          const cur = seq[seq.length - 1];
+          const nx = [...left].filter(j => runsInto(S[cur], S[j]));
+          if (nx.length !== 1) break;
+          seq.push(nx[0]); left.delete(nx[0]);
+        }
+        if (seq.length === S.length) headIdx = seq[0];
+      }
+    }
+    if (headIdx == null) continue;
+    chained.set(h, S[headIdx].club);
+    const geoKey = h.course + '#' + h.hole;
+    if (!teePosByCourseHole.has(geoKey)) teePosByCourseHole.set(geoKey, []);
+    teePosByCourseHole.get(geoKey).push([S[headIdx].sy, S[headIdx].sx]);
+  }
+  // Median tee position per course+hole, from whatever the chain confirmed.
+  const teeRef = new Map();
+  teePosByCourseHole.forEach((pts, geoKey) => {
+    const lats = pts.map(p => p[0]).sort((a, b) => a - b);
+    const lngs = pts.map(p => p[1]).sort((a, b) => a - b);
+    const mid = Math.floor(pts.length / 2);
+    teeRef.set(geoKey, [lats[mid], lngs[mid]]);
+  });
+
+  const byRound = new Map();
+  for (const h of holeMap.values()) {
+    if (!byRound.has(h.round)) byRound.set(h.round, []);
+    byRound.get(h.round).push(h);
+  }
+  const FAIRWAY_MAP = { hit: 'hit', left: 'left', right: 'right', long: 'long', short: 'short' };
+  const out = [];
+  for (const [rawDateTime, holes] of byRound) {
+    const date = rawDateTime.slice(0, 10);
+    const scores = Array(18).fill(null), putts = Array(18).fill(null),
+          gir = Array(18).fill(null), fairways = Array(18).fill(null), pars = Array(18).fill(null),
+          teeClub = Array(18).fill(null);
+    let logged = 0;
+    for (const h of holes) {
+      if (!h.hole || h.hole < 1 || h.hole > 18) continue;
+      const i = h.hole - 1;
+      pars[i] = h.par;
+      if (h.score) { scores[i] = h.score; logged++; }
+      putts[i] = (h.cardPutts === 0 ? null : h.cardPutts); // 0 logged means unrecorded, not a hole in zero putts
+      gir[i] = h.gir === 'yes' ? true : (h.gir === 'no' ? false : null);
+      fairways[i] = h.par === 3 ? null : (FAIRWAY_MAP[h.fairwayType] || null);
+
+      if (chained.has(h)) {
+        teeClub[i] = chained.get(h);
+      } else if (h.shots && h.shots.length) {
+        const ref = teeRef.get(h.course + '#' + h.hole);
+        if (ref) {
+          const near = h.shots.filter(s => feetBetween(s.sy, s.sx, ref[0], ref[1]) < TEE_TOL);
+          if (near.length === 1) teeClub[i] = near[0].club;
+        }
+      }
+    }
+    out.push({ date, rawDateTime, course: holes[0].course, pars, scores, putts, gir, fairways, teeClub,
+               loggedHoles: logged, complete: logged >= 17 });
+  }
+  out.sort((a, b) => (a.rawDateTime > b.rawDateTime ? 1 : -1));
+  return out;
+}
+
+// Same normalisation the tracker uses to key courses, kept identical so a
+// course learned here lines up with the same course if it's later touched
+// from the tracker's own bulk importer.
+function slugCourse(name) {
+  return String(name).toLowerCase()
+    .replace(/\b(golf|club|centre|center|course|the)\b/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
+// Saves any round from this file not already in the cloud (matched by
+// date), building a course_def for any course not seen before — same
+// mechanism the tracker's own importer uses, so the two stay compatible.
+// Rounds that DO already exist are not reinserted, but if this import found
+// tee-club data for holes the existing row has none for, that gets patched
+// in — otherwise re-running this after a fix like the one above would
+// silently do nothing, since almost every round is already in the cloud.
+async function syncRoundsFromImport(roundsForSave) {
+  if (!roundsForSave.length) return { saved: 0, patched: 0, skipped: 0, failed: 0 };
+  const overwrite = !!(document.getElementById('overwrite-teeclub') && document.getElementById('overwrite-teeclub').checked);
+  let existing = [];
+  try {
+    const r = await fetch(`${REST_URL}/rounds?select=id,date,tee_club`, { headers: authHeaders() });
+    if (r.ok) existing = await r.json();
+  } catch (e) { console.warn('[ROUNDS] could not check existing rounds —', e.message); }
+  const existingByDate = new Map(existing.map(r => [r.date, r]));
+
+  const toInsert = [], toPatch = [];
+  for (const r of roundsForSave) {
+    if (!r.date) continue;
+    const ex = existingByDate.get(r.date);
+    if (!ex) { toInsert.push(r); continue; }
+    // Normally only fill holes the existing round has no tee_club for, so a
+    // hand-entered or previously-trusted value is never touched. With the
+    // overwrite box ticked, any hole this file can derive a club for wins
+    // outright — for when the existing data is suspected to be wrong.
+    const existingTc = Array.isArray(ex.tee_club) ? ex.tee_club : Array(18).fill(null);
+    const merged = existingTc.map((v, i) => {
+      const derived = r.teeClub[i] ?? null;
+      if (overwrite) return derived != null ? derived : v;
+      return v != null ? v : derived;
+    });
+    const changed = merged.some((v, i) => v !== existingTc[i]);
+    if (changed) toPatch.push({ id: ex.id, tee_club: merged });
+  }
+  const skipped = roundsForSave.length - toInsert.length - toPatch.length;
+  let saved = 0, patched = 0, failed = 0;
+  const seenCourseThisRun = new Set();
+
+  for (const r of toInsert) {
+    try {
+      const key = slugCourse(r.course || 'course');
+      let course_def = null;
+      if (!seenCourseThisRun.has(key)) {
+        seenCourseThisRun.add(key);
+        const parKnown = r.pars.filter(p => p != null).length >= 9;
+        if (parKnown) {
+          const filledPars = r.pars.map(p => (p == null ? 4 : p));
+          course_def = {
+            key, name: r.course,
+            short: (r.course || '').replace(/\s*(Golf\s+)?(Club|Centre|Center|Course)\s*$/i, '').trim() || r.course,
+            teeKey: 'yellow',
+            tee: { name: 'Yellow', cr: null, sl: null, par: filledPars.reduce((a, b) => a + b, 0),
+                   par_h: filledPars, si: Array(18).fill(0).map((_, i) => i + 1), derived: true, siUnknown: true },
+          };
+        }
+      }
+      const row = { date: r.date, course: key, tee: 'yellow',
+                    holes: r.scores, putts: r.putts, gir: r.gir, fairways: r.fairways,
+                    tee_club: r.teeClub,
+                    notes: 'Imported from Golfshot bulk export (Club Distance page)' };
+      if (course_def) row.course_def = course_def;
+      const resp = await fetch(`${REST_URL}/rounds`, {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ user_id: currentUser().id, ...row }),
+      });
+      if (resp.ok) saved++; else failed++;
+    } catch (e) {
+      failed++;
+      console.warn('[ROUNDS] failed to save round', r.date, e.message);
+    }
+  }
+
+  for (const p of toPatch) {
+    try {
+      const resp = await fetch(`${REST_URL}/rounds?id=eq.${p.id}`, {
+        method: 'PATCH',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ tee_club: p.tee_club }),
+      });
+      if (resp.ok) patched++; else failed++;
+    } catch (e) {
+      failed++;
+      console.warn('[ROUNDS] failed to patch tee_club for round id', p.id, e.message);
+    }
+  }
+
+  return { saved, patched, skipped, failed };
+}
+
+async function handle(file){
+  setStatus('warn', `Reading <b>${file.name}</b>…`);
+  try{
+    const text = await file.text();
+    const rows = parseCSV(text);
+    const stats = buildStats(rows);
+    renderAll(stats);
+    setStatus('warn', `${stats.rounds} rounds · ${stats.shots.toLocaleString()} shots — saving…`);
+    try{
+      // Strip via a copy: deleting from `stats` would also empty it out of
+      // DATA, which the map viewer on this page reads from.
+      const { shotMap: map, roundsForSave, ...aggregates } = stats;
+      await sbSave(aggregates);
+      await startTrialIfNeeded();
+
+      /* Two tables, two writes, one drop of the file. The shot map goes to its
+         own row because it is a few hundred kilobytes against forty for
+         everything else, and the tracker should not pull it just to draw a
+         putting table.
+
+         Its failure is caught separately so a shot-map problem cannot lose the
+         aggregates — but it is reported rather than swallowed. It used to be
+         a console warning under an "all saved" message, which is the worst of
+         both: the shot maps silently a week stale while the page said fine. */
+      let mapNote = '', mapOk = true;
+      const shots = map ? map.courses.reduce((n,c)=>n+c.holes.reduce((m,h)=>m+h.shots.length,0),0) : 0;
+      if(map){
+        try{
+          await sbSaveShotMap(map);
+          mapNote = ` · shot maps updated (${shots.toLocaleString()} shots)`;
+        }catch(e){
+          mapOk = false;
+          console.warn('[SHOTMAP] not saved —', e.message);
+          mapNote = ` · <b>shot maps NOT saved</b> (${e.message}) — dispersion, hole maps and strokes gained
+                      will still show the previous import`;
+        }
+      } else {
+        mapOk = false;
+        mapNote = ' · <b>no shot maps in this export</b> — dispersion and hole maps keep the previous import';
+      }
+
+      let courseNote = '';
+      if (map && map.courses && map.courses.length) {
+        try {
+          const { added } = await syncCoursesFromImport(map.courses.map(c => c.name));
+          if (added) {
+            courseNote = ` · <b>${added}</b> new course${added === 1 ? '' : 's'} added to Courses played — ` +
+              `add ${added === 1 ? 'its' : 'their'} location on the Courses page`;
+          }
+        } catch (e) {
+          console.warn('[COURSES] sync from import failed —', e.message);
+        }
+      }
+
+      let roundsNote = '';
+      if (roundsForSave && roundsForSave.length) {
+        try {
+          const { saved, patched, skipped, failed } = await syncRoundsFromImport(roundsForSave);
+          const bits = [];
+          if (saved) bits.push(`<b>${saved}</b> round${saved === 1 ? '' : 's'} added to your history`);
+          if (patched) bits.push(`<b>${patched}</b> existing round${patched === 1 ? '' : 's'} filled in with tee club data`);
+          if (failed) bits.push(`<b>${failed}</b> failed to save`);
+          if (bits.length) roundsNote = ' · ' + bits.join(', ');
+          else if (skipped) roundsNote = ` · all ${skipped} rounds in this file were already up to date`;
+        } catch (e) {
+          console.warn('[ROUNDS] sync from import failed —', e.message);
+        }
+      }
+      const pl = stats.players;
+      const who = pl && pl.ignored
+        ? ` · reading <b>${pl.me}</b> only, ${pl.ignored.toLocaleString()} rows for ${pl.others.length} playing partner${pl.others.length>1?'s':''} ignored`
+        : '';
+      setStatus(mapOk ? 'ok' : 'warn',
+        `Updated from <b>${file.name}</b> · ${stats.rounds} rounds${who} · club distances saved${mapNote}${courseNote}${roundsNote}`);
+      /* Close the loop. Arriving here from the tracker's Import button and then
+         having to find your own way back is most of what made this feel like a
+         chore. The tracker reloads its figures on the way in, so the new
+         numbers are already there when you land. */
+      const done = document.getElementById('after-import');
+      if(done) done.style.display = 'block';
+    }catch(err){
+      setStatus('warn', `Figures updated on this device, but saving failed: ${err.message}. ` +
+        `If the table does not exist yet, run the setup SQL below.`);
+      document.getElementById('card-setup').style.display = 'block';
+      document.getElementById('setup-details').open = true;
+    }
+  }catch(err){
+    setStatus('err', `Could not read that file: ${err.message}`);
+  }
+}
+
+/* ═══ BOOT ══════════════════════════════════════════════ */
+(async function(){
+  ['card-year','card-main','card-season','card-grid','card-yoy'].forEach(id=>document.getElementById(id).classList.add('hide'));
+  try{
+    const row = await sbLoad();
+    if(row && row.payload){
+      renderAll(row.payload);
+      setStatus('ok', `Showing figures from <b>${when(row.created_at)}</b> · ${row.payload.rounds} rounds. Drop a fresh export to update.`);
+      document.getElementById('setup-sub').textContent = 'already done';
+    }else{
+      setStatus('warn', 'No figures saved yet — drop your export above to build them.');
+    }
+  }catch(err){
+    setStatus('err', `Could not reach the database (${err.message}). Drop an export to work offline, ` +
+      `or run the setup SQL below if the table is missing.`);
+    document.getElementById('card-setup').style.display = 'block';
+    document.getElementById('setup-details').open = true;
+  }
+})();
+</script>
+</body>
+</html>
