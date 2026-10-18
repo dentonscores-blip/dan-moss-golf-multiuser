@@ -4,11 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b100d">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Flightline">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="logo.png">
+<style id="gate">html{visibility:hidden}</style>
+<script>
+/* Beyond the Shot access gate. Same check as club-distance.html: needs the login session that
+   index.html leaves in localStorage, and bounces to the app before anything shows if there is none. */
+(function(){
+  var s=null;
+  try{ s=JSON.parse(localStorage.getItem('sb_session')||'null'); }catch(e){}
+  if(!s||!s.user){ location.replace('../index.html'); throw new Error('Not logged in, redirecting.'); }
+  var g=document.getElementById('gate'); if(g) g.remove();
+})();
+</script>
 <style>:root{color-scheme:light;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Flightline Tracer</title>
+</head>
+<body>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 :root{
@@ -36,6 +49,7 @@
 }
 
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{
   background:var(--bg); color:var(--fg);
   font:400 15px/1.45 var(--body);
@@ -48,7 +62,10 @@ button,select,input{font:inherit;color:inherit}
 /* header */
 .top{max-width:1180px;margin:0 auto 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{display:flex;align-items:center;gap:10px;color:var(--accent-text)}
-.brand svg{width:30px;height:30px;flex:none}
+.brand .logo{width:36px;height:36px;flex:none;display:block;border-radius:9px;box-shadow:0 0 0 1px var(--line)}
+.brand .word{display:grid;gap:4px;min-width:0}
+.brand .word em{font:500 10px/1 var(--mono);font-style:normal;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.brand .ver{font:600 12px/1 var(--mono,ui-monospace,monospace);letter-spacing:.06em;color:var(--muted);align-self:flex-end;padding-bottom:3px}
 .brand span{font:700 26px/1 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--fg)}
 
 /* buttons */
@@ -129,7 +146,9 @@ button,select,input{font:inherit;color:inherit}
 .mk{position:absolute;top:0;width:0;height:100%;border-left:2px solid var(--accent)}
 .mk b{position:absolute;top:2px;left:4px;font:500 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent-text);white-space:nowrap}
 .mk.end b{left:auto;right:4px}
-.steps{display:grid;grid-template-columns:1fr 1fr 1.4fr 1fr 1fr;gap:6px}
+.mk.top{border-left:2px dashed var(--fg)}
+.mk.top b{color:var(--fg)}
+.steps{display:grid;grid-template-columns:1fr 1fr 1.5fr 1fr 1fr .9fr;gap:6px}
 .steps .btn{padding:0 4px;font-family:var(--mono);font-weight:500}
 .meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .readout{font:500 12px/1.2 var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
@@ -179,69 +198,113 @@ progress{width:100%;height:8px;accent-color:var(--accent)}
 .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .mark-btn{display:grid;gap:6px}
 .result{display:grid;gap:10px}
+.result[hidden]{display:none}
 .result video{width:100%;max-height:40svh;background:var(--stage);border-radius:8px}
 .foot{max-width:1180px;margin:20px auto 0;font-size:12px;color:var(--muted)}
 
 /* phone layout */
 .stage{display:block}
 .tabbar{display:none}
+#helpBtn{display:none}
 @media (max-width:899px), (max-height:520px){
   html,body{height:100%}
-  body{display:flex;flex-direction:column;padding-block:8px;overflow:hidden;overscroll-behavior:none}
-  .top{width:100%;max-width:none;margin:0 0 8px;flex:none}
-  .brand svg{width:24px;height:24px}
-  .brand span{font-size:22px}
-  #pick{min-height:40px;padding:0 12px;white-space:nowrap}
+  body{display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 6px) 10px 0;overflow:hidden;overscroll-behavior:none;height:100dvh}
+  .top{width:100%;max-width:none;margin:0 0 6px;flex:none;gap:6px}
+  .brand{gap:6px;min-width:0}
+  .brand .logo{width:30px;height:30px;border-radius:7px}
+  .brand .word{gap:3px}
+  .brand .word em{font-size:8.5px;letter-spacing:.1em}
+  .brand span{font-size:19px;letter-spacing:.05em}
+  .brand .ver{font-size:10px;letter-spacing:.02em}
+  .top .btn{min-height:38px;padding:0 12px;white-space:nowrap}
+  #helpBtn{display:inline-flex;min-width:38px;padding:0}
   .zoombar{right:6px;bottom:6px;gap:3px}
-  .zb{min-width:38px;height:38px}
-  .zb.wide{min-width:48px}
+  .zb{min-width:36px;height:36px}
+  .zb.wide{min-width:46px}
   .zb svg{width:18px;height:18px}
   .foot{display:none}
-  .app{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;width:100%;max-width:none;margin:0}
-  .deck{position:static;flex:1;min-height:0;display:flex;flex-direction:column;padding:0;background:none}
-  .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  .app{flex:1;min-height:0;min-width:0;display:flex;flex-direction:column;gap:6px;width:100%;max-width:none;margin:0}
+  .deck,.panels,.transport,.scrub{min-width:0;max-width:100%}
+  .deck{position:static;flex:none;min-height:0;display:flex;flex-direction:column;padding:0;background:none}
+  .stage{flex:none;height:min(38dvh,calc((100vw - 20px) / var(--ar,1.7778)));display:flex;align-items:center;justify-content:center}
   .frame{margin:0}
-  .transport{flex:none;margin-top:6px;gap:4px}
-  .status{min-height:18px;font-size:12px;line-height:1.3}
-  .panels{flex:none;max-height:36svh;overflow-y:auto;overscroll-behavior:contain}
-  .sec{display:none;border-top:0!important}
-  body[data-tab="carry"] .sec[data-tab="carry"],
-  body[data-tab="path"] .sec[data-tab="path"],
-  body[data-tab="timing"] .sec[data-tab="timing"],
-  body[data-tab="look"] .sec[data-tab="look"],
-  body[data-tab="export"] .sec[data-tab="export"]{display:grid}
-  body:not([data-tab="carry"]):not([data-tab="path"]):not([data-tab="timing"]):not([data-tab="look"]):not([data-tab="export"]) .panels{display:none}
-  .tabbar{flex:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
-  .tabbar button{min-height:46px;padding:0 2px;border-radius:8px;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);font:500 12px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;touch-action:manipulation}
-  .tabbar button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:transparent}
+  .transport{flex:none;margin-top:4px;gap:4px;grid-template-columns:minmax(0,1fr)}
+  .scrub input{height:30px}
+  .marks{height:12px}
+  .steps{gap:5px}
+  .steps .btn{min-height:44px}
+  .meta{gap:6px;flex-wrap:nowrap;min-width:0}
+  .meta .readout{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .meta .row{flex-wrap:nowrap;flex:none;gap:4px}
+  .meta .sel,.meta .btn.sm{min-height:36px;padding:0 6px;font-size:12px}
+  .meta .btn.sm{white-space:nowrap}
+  .status{min-height:18px;font-size:12px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .panels{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;border-radius:12px 12px 0 0;border-bottom:0}
+  .sec{display:none;border-top:0!important;padding:12px 12px 14px;gap:10px}
+  body[data-tab="trace"] .sec[data-grp="trace"],
+  body[data-tab="style"] .sec[data-grp="style"],
+  body[data-tab="export"] .sec[data-grp="export"]{display:grid}
+  body[data-tab="trace"] .sec[data-tab="timing"],
+  body[data-tab="style"] .sec[data-tab="look"]{border-top:1px solid var(--line)!important}
+  .sec .hint{display:none}
+  body.hints .sec .hint,.sec .hint.keep{display:block}
+  .sec h2{font-size:13px}
+  .chips{flex-wrap:nowrap;overflow-x:auto;min-height:40px;padding-bottom:2px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .pt{flex:none}
+  .row .btn{min-height:42px;padding:0 12px}
+  .tools{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+  .tools .btn{padding:0 1px;font-size:11px;min-height:42px;white-space:nowrap}
+  .nopts{font-size:13px}
+  .tabbar{flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:0 -10px;padding:6px 10px calc(env(safe-area-inset-bottom,0px) + 6px);background:var(--panel);border-top:1px solid var(--line)}
+  .tabbar button{min-height:50px;padding:0 4px;border-radius:10px;border:0;background:transparent;color:var(--muted);font:600 13px/1.1 var(--body);letter-spacing:.04em;cursor:pointer;touch-action:manipulation;display:grid;gap:3px;justify-items:center;align-content:center}
+  .tabbar button svg{width:22px;height:22px}
+  .tabbar button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
   .tabbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 }
+@media (max-width:380px){.brand span{font-size:16px;letter-spacing:.02em}.brand .word em{font-size:8px;letter-spacing:.06em}.brand .logo{width:28px;height:28px}.top .btn{padding:0 8px}.brand .ver{font-size:9px}}
 @media (max-height:520px) and (min-aspect-ratio:1/1){
   body{display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-rows:auto minmax(0,1fr) auto;column-gap:12px;row-gap:6px;padding-block:6px}
   .top{grid-column:2;grid-row:1;margin:0}
   .app{display:contents}
   .deck{grid-column:1;grid-row:1 / 4}
   .panels{grid-column:2;grid-row:2;max-height:none;min-height:0}
-  .tabbar{grid-column:2;grid-row:3}
+  .tabbar{grid-column:2;grid-row:3;margin:0;padding:0;border:0;background:none;gap:4px}
+  .tabbar button{min-height:44px}
+  .stage{flex:1;height:auto}
+  .panels{border-radius:12px;border-bottom:1px solid var(--line)}
   .status{display:none}
-  .brand span{font-size:18px;letter-spacing:.06em}
-  .brand svg{width:20px;height:20px}
+  .brand span{font-size:15px;letter-spacing:.03em}
+  .brand .logo{width:24px;height:24px;border-radius:6px}
+  .brand .word em{display:none}
+  .brand .ver{display:none}
+  .top .btn{min-height:34px;padding:0 8px;font-size:13px}
+  #helpBtn{min-width:34px}
   .transport{margin-top:4px}
   .steps .btn,.meta .btn.sm,.meta .sel{min-height:40px}
 }
 
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+#pv{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:rgba(5,8,6,.82)}
+#pv[hidden]{display:none}
+#pv .box{width:min(560px,100%);max-height:100%;overflow:auto;display:grid;gap:12px;padding:14px;border-radius:14px;background:var(--panel);border:1px solid var(--line)}
+#pv h2{margin:0;font:600 16px/1.2 var(--body)}
+#pv video{width:100%;max-height:52vh;background:#000;border-radius:10px}
+#pv .info{margin:0;font:500 12px/1.5 var(--mono);color:var(--muted);word-break:break-word}
+#pv .info.err{color:var(--danger)}
+#pv .acts{display:grid;gap:8px;grid-template-columns:1fr 1fr}
+#pv .acts .wide{grid-column:1/-1}
 </style>
-</head>
-<body>
 
 <header class="top">
   <div class="brand">
-    <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 27 C 9 3, 22 3, 28 20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="28.5" cy="23" r="3" fill="currentColor"/></svg>
-    <span>Flightline</span>
+    <img class="logo" src="logo.png" width="36" height="36" alt="Beyond the Shot">
+    <div class="word"><span>Flightline</span><em>Beyond the Shot</em></div>
+    <small class="ver" title="Version">V1.21</small>
   </div>
-  <div>
+  <div class="row" style="flex-wrap:nowrap;gap:6px">
     <input type="file" id="file" accept="video/*,.mov,.mp4,.m4v" class="sr">
+    <button class="btn" id="helpBtn" type="button" aria-pressed="false" aria-label="Show tips" title="Show tips">?</button>
     <label for="file" class="btn primary" id="pick">Choose video</label>
   </div>
 </header>
@@ -273,6 +336,7 @@ progress{width:100%;height:8px;accent-color:var(--accent)}
         <div class="marks" id="marks">
           <i class="mk" id="mkA" hidden><b>Launch</b></i>
           <i class="mk end" id="mkB" hidden><b>Landing</b></i>
+          <i class="mk top" id="mkT" hidden><b>Top</b></i>
         </div>
       </div>
       <div class="steps">
@@ -281,6 +345,7 @@ progress{width:100%;height:8px;accent-color:var(--accent)}
         <button class="btn" id="play" disabled aria-label="Play"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button>
         <button class="btn" id="f1" disabled aria-label="Forward 1 frame">+1</button>
         <button class="btn" id="f10" disabled aria-label="Forward 10 frames">+10</button>
+        <button class="btn" id="hear" disabled aria-pressed="true" aria-label="Sound on" title="Sound on or off while playing"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 9.5v5h4l5 4v-13l-5 4z" fill="currentColor"/><path id="hearWave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
       </div>
       <div class="meta">
         <span class="readout" id="readout">No video loaded</span>
@@ -307,7 +372,7 @@ progress{width:100%;height:8px;accent-color:var(--accent)}
   </section>
 
   <section class="panels" aria-label="Controls">
-    <div class="sec" data-tab="carry">
+    <div class="sec" data-tab="carry" data-grp="style">
       <h2>Carry</h2>
       <div class="row" style="align-items:flex-end">
         <div class="field grow"><label class="lab" for="carry">Distance carried</label>
@@ -331,14 +396,27 @@ progress{width:100%;height:8px;accent-color:var(--accent)}
       </div>
       <p class="hint">Enter the carry for the shot you are about to trace. The plate appears at launch and fades out with the tracer.</p>
     </div>
-    <div class="sec" data-tab="path">
+    <div class="sec" data-tab="path" data-grp="trace">
       <h2>Path</h2>
       <div class="chips" id="chips"><span class="nopts">No points yet</span></div>
-      <div class="row">
+      <div class="row tools">
         <button class="btn sm quiet" id="undo" disabled>Undo</button>
-        <button class="btn sm quiet" id="del" disabled>Delete point</button>
+        <button class="btn sm quiet" id="del" disabled aria-label="Delete selected point">Delete</button>
         <button class="btn sm quiet" id="clear" disabled>Clear</button>
+        <button class="btn sm quiet" id="mvUp" disabled aria-label="Move selected point earlier in the path">&larr; Earlier</button>
+        <button class="btn sm quiet" id="mvDn" disabled aria-label="Move selected point later in the path">Later &rarr;</button>
       </div>
+      <div class="field">
+        <span class="lab">New points go</span>
+        <div class="seg" data-key="insert" role="group" aria-label="Where new points are added">
+          <button data-v="end" aria-pressed="true">At the end</button>
+          <button data-v="after" aria-pressed="false">After selected</button>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn sm" id="arcBtn" disabled>Arc between Start &amp; End</button>
+      </div>
+      <p class="hint" id="pathHint">The first point is the Start and the last is the End. Choose &ldquo;After selected&rdquo; to put a new point between two others, and use the Move buttons to reorder. Or press Arc to have one smooth flight drawn between Start and End.</p>
       <div class="field">
         <span class="lab">Curve</span>
         <div class="seg" data-key="curve" role="group" aria-label="Curve">
@@ -346,16 +424,17 @@ progress{width:100%;height:8px;accent-color:var(--accent)}
           <button data-v="exact" aria-pressed="false">Through points</button>
         </div>
       </div>
-      <p class="hint">Press on the ball at address, slide until it sits under the magnifier, then release. Keep adding points along the flight, ending where it lands. Drag any point to adjust it. Three to five points is plenty.</p>
+      <p class="hint">Press on the ball at address, slide until it sits under the magnifier, then release. Step forward a few frames and tap the ball again, ending where it lands. Each point is pinned to the frame it was placed on, so the line follows the real ball. Drag any point to adjust it.</p>
       <p class="hint">To find the ball, pinch to zoom or scroll the mouse wheel. Move around with two fingers, or switch on the hand button to drag with one.</p>
     </div>
 
-    <div class="sec" data-tab="timing">
+    <div class="sec" data-tab="timing" data-grp="trace">
       <h2>Timing</h2>
       <div class="seg" data-key="timing" role="group" aria-label="Timing">
-        <button data-v="auto" aria-pressed="true">Auto</button>
-        <button data-v="follow" aria-pressed="false">Follow my points</button>
+        <button data-v="follow" aria-pressed="true">Match my points</button>
+        <button data-v="auto" aria-pressed="false">Auto</button>
       </div>
+      <p class="hint" id="hangNote" hidden></p>
       <div id="autoBox" class="grid" style="display:grid;gap:12px">
         <div class="two">
           <div class="mark-btn">
@@ -367,11 +446,20 @@ progress{width:100%;height:8px;accent-color:var(--accent)}
             <span class="val" id="landingVal">—</span>
           </div>
         </div>
-        <div class="field">
-          <span class="lab">Slowdown <span id="slowVal" class="val"></span></span>
-          <input type="range" id="slow" min="1" max="2.6" step="0.1" value="1.6" aria-label="Ball slowdown">
+        <div class="row"><button class="btn sm" id="hangSet" hidden>Set landing from hang time</button></div>
+        <p class="hint">Step to the frame of impact and press Launch. Step to where the ball comes down and press Landing.</p>
+      </div>
+      <div id="shapeBox" class="grid" style="display:none;gap:12px">
+        <div class="mark-btn">
+          <button class="btn" id="setTop" disabled>Ball at the top is here</button>
+          <span class="val" id="topVal">optional</span>
+          <button class="btn sm quiet" id="clrTop" hidden>Clear</button>
         </div>
-        <p class="hint">Step to the frame of impact and press Launch. Step to where the ball comes down and press Landing. The tracer runs between them, quick off the club and slowing towards the end.</p>
+        <div class="field">
+          <span class="lab">Perspective <span id="perspVal" class="val"></span></span>
+          <input type="range" id="persp" min="0" max="3" step="0.05" value="0.85" aria-label="Perspective: how much the tracer rushes off the club and slows as the ball gets further away">
+        </div>
+        <p class="hint">Optionally step to where the ball is highest and press Ball at the top, so the tracer reaches the top on that frame. Where the tracer is working the flight out for itself, it shoots up off the club and slows as the ball gets further away, the way it looks on camera. Slide Perspective down for a more even speed.</p>
       </div>
       <div id="followBox" style="display:none;gap:10px">
         <p class="hint" id="followNote">Each point is pinned to the frame it was placed on, and the tracer reaches it on that frame. Select a point, step to the frame where the ball is really there, and press Pin.</p>
@@ -379,7 +467,7 @@ progress{width:100%;height:8px;accent-color:var(--accent)}
       </div>
     </div>
 
-    <div class="sec" data-tab="look">
+    <div class="sec" data-tab="look" data-grp="style">
       <h2>Look</h2>
       <div class="field"><span class="lab">Style</span>
         <div class="seg" data-key="style" role="group" aria-label="Tracer style">
@@ -405,8 +493,16 @@ progress{width:100%;height:8px;accent-color:var(--accent)}
       </div>
     </div>
 
-    <div class="sec" data-tab="export">
+    <div class="sec" data-tab="export" data-grp="export">
       <h2>Export</h2>
+      <div class="field">
+        <span class="lab">Output</span>
+        <div class="seg" data-key="outKind" role="group" aria-label="What to export">
+          <button data-v="video" aria-pressed="true">Video with tracer</button>
+          <button data-v="overlay" aria-pressed="false">Tracer only</button>
+        </div>
+      </div>
+      <p class="hint keep" id="overlayHint" hidden>For Final Cut, iMovie, CapCut and similar. You get a video of just the tracer on black. Put it on a track above your clip, lined up at the start, then set its blend mode to <b>Screen</b> (Final Cut: Video inspector, Compositing, Blend Mode). The black disappears and only the tracer shows, while you keep full control of your own edit. Whole video is selected so it lines up with your clip.</p>
       <div class="two">
         <div class="field"><label class="lab" for="clip">Clip</label>
           <select class="sel" id="clip">
@@ -420,7 +516,7 @@ progress{width:100%;height:8px;accent-color:var(--accent)}
             <option value="2160">4K</option>
           </select></div>
       </div>
-      <label class="chk"><input type="checkbox" id="sound"> Include sound</label>
+      <label class="chk" id="soundRow"><input type="checkbox" id="sound"> Include sound</label>
       <div class="row">
         <button class="btn primary" id="export" disabled>Export video</button>
         <button class="btn" id="still" disabled>Save still</button>
@@ -439,16 +535,28 @@ progress{width:100%;height:8px;accent-color:var(--accent)}
     </div>
   </section>
   <nav class="tabbar" id="tabbar" aria-label="Sections">
-    <button data-tab="carry" aria-pressed="false">Carry</button>
-    <button data-tab="path" aria-pressed="false">Path</button>
-    <button data-tab="timing" aria-pressed="false">Timing</button>
-    <button data-tab="look" aria-pressed="false">Look</button>
-    <button data-tab="export" aria-pressed="false">Export</button>
+    <button data-tab="trace" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19C8 4 16 4 21 15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="21" cy="17" r="2.2" fill="currentColor"/></svg>Trace</button>
+    <button data-tab="style" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="17" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/></svg>Style</button>
+    <button data-tab="export" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 14v5h14v-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Export</button>
   </nav>
 </main>
-<p class="foot">Everything runs in your browser. The tracer is plotted by hand, so it shows the line you draw and does not measure distance, speed or spin.</p>
+<p class="foot">Flightline is part of Beyond the Shot. Everything runs in your browser. The tracer is plotted by hand, so it shows the line you draw and does not measure distance, speed or spin.</p>
 
+<div id="pv" role="dialog" aria-modal="true" aria-labelledby="pvTitle" hidden>
+  <div class="box">
+    <h2 id="pvTitle">Preview your video</h2>
+    <video id="pvVideo" controls playsinline preload="metadata"></video>
+    <p class="info" id="pvInfo">Loading preview…</p>
+    <div class="acts">
+      <button class="btn primary wide" id="pvUse" type="button">Use this video</button>
+      <button class="btn" id="pvOther" type="button">Choose another</button>
+      <button class="btn quiet" id="pvCancel" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
 <script>
+/* mp4-muxer 5.2.1 (MIT, Vanilagy), used to write the exported video */
+"use strict";var Mp4Muxer=(()=>{var e=Object.defineProperty,t=Object.getOwnPropertyDescriptor,i=Object.getOwnPropertyNames,s=Object.prototype.hasOwnProperty,a=(e,t,i)=>{if(!t.has(e))throw TypeError("Cannot "+i)},r=(e,t,i)=>(a(e,t,"read from private field"),i?i.call(e):t.get(e)),n=(e,t,i)=>{if(t.has(e))throw TypeError("Cannot add the same private member more than once");t instanceof WeakSet?t.add(e):t.set(e,i)},o=(e,t,i,s)=>(a(e,t,"write to private field"),s?s.call(e,i):t.set(e,i),i),h=(e,t,i)=>(a(e,t,"access private method"),i),l={};((t,i)=>{for(var s in i)e(t,s,{get:i[s],enumerable:!0})})(l,{ArrayBufferTarget:()=>Me,FileSystemWritableFileStreamTarget:()=>Oe,Muxer:()=>Rt,StreamTarget:()=>We});var d,f,u,m,p,c,w,g,b=new Uint8Array(8),y=new DataView(b.buffer),k=e=>[(e%256+256)%256],T=e=>(y.setUint16(0,e,!1),[b[0],b[1]]),C=e=>(y.setUint32(0,e,!1),[b[1],b[2],b[3]]),v=e=>(y.setUint32(0,e,!1),[b[0],b[1],b[2],b[3]]),S=e=>(y.setUint32(0,Math.floor(e/2**32),!1),y.setUint32(4,e,!1),[b[0],b[1],b[2],b[3],b[4],b[5],b[6],b[7]]),x=e=>(y.setInt16(0,256*e,!1),[b[0],b[1]]),z=e=>(y.setInt32(0,65536*e,!1),[b[0],b[1],b[2],b[3]]),E=e=>(y.setInt32(0,2**30*e,!1),[b[0],b[1],b[2],b[3]]),A=(e,t=!1)=>{let i=Array(e.length).fill(null).map((t,i)=>e.charCodeAt(i));return t&&i.push(0),i},M=e=>e&&e[e.length-1],W=e=>{let t;for(let i of e)(!t||i.presentationTimestamp>t.presentationTimestamp)&&(t=i);return t},O=(e,t,i=!0)=>{let s=e*t;return i?Math.round(s):s},B=e=>{let t=e*(Math.PI/180),i=Math.cos(t),s=Math.sin(t);return[i,s,0,-s,i,0,0,0,1]},U=B(0),D=e=>[z(e[0]),z(e[1]),E(e[2]),z(e[3]),z(e[4]),E(e[5]),z(e[6]),z(e[7]),E(e[8])],j=e=>e?"object"!=typeof e?e:Array.isArray(e)?e.map(j):Object.fromEntries(Object.entries(e).map(([e,t])=>[e,j(t)])):e,R=e=>e>=0&&e<2**32,I=(e,t,i)=>({type:e,contents:t&&new Uint8Array(t.flat(10)),children:i}),N=(e,t,i,s,a)=>I(e,[k(t),C(i),s??[]],a),V=e=>({type:"mdat",largeSize:e}),F=(e,t,i=!1)=>I("moov",null,[L(t,e),...e.map(e=>$(e,t)),i?me(e):null]),L=(e,t)=>{let i=O(Math.max(0,...t.filter(e=>e.samples.length>0).map(e=>{const t=W(e.samples);return t.presentationTimestamp+t.duration})),Bt),s=Math.max(...t.map(e=>e.id))+1,a=!R(e)||!R(i),r=a?S:v;return N("mvhd",+a,0,[r(e),r(e),v(Bt),r(i),z(1),x(1),Array(10).fill(0),D(U),Array(24).fill(0),v(s)])},$=(e,t)=>I("trak",null,[P(e,t),H(e,t)]),P=(e,t)=>{let i,s=W(e.samples),a=O(s?s.presentationTimestamp+s.duration:0,Bt),r=!R(t)||!R(a),n=r?S:v;return i="video"===e.info.type?"number"==typeof e.info.rotation?B(e.info.rotation):e.info.rotation:U,N("tkhd",+r,3,[n(t),n(t),v(e.id),v(0),n(a),Array(8).fill(0),T(0),T(0),x("audio"===e.info.type?1:0),T(0),D(i),z("video"===e.info.type?e.info.width:0),z("video"===e.info.type?e.info.height:0)])},H=(e,t)=>I("mdia",null,[_(e,t),q("video"===e.info.type?"vide":"soun"),G(e)]),_=(e,t)=>{let i=W(e.samples),s=O(i?i.presentationTimestamp+i.duration:0,e.timescale),a=!R(t)||!R(s),r=a?S:v;return N("mdhd",+a,0,[r(t),r(t),v(e.timescale),r(s),T(21956),T(0)])},q=e=>N("hdlr",0,0,[A("mhlr"),A(e),v(0),v(0),v(0),A("mp4-muxer-hdlr",!0)]),G=e=>I("minf",null,["video"===e.info.type?J():K(),Q(),Z(e)]),J=()=>N("vmhd",0,1,[T(0),T(0),T(0),T(0)]),K=()=>N("smhd",0,0,[T(0),T(0)]),Q=()=>I("dinf",null,[X()]),X=()=>N("dref",0,0,[v(1)],[Y()]),Y=()=>N("url ",0,1),Z=e=>{const t=e.compositionTimeOffsetTable.length>1||e.compositionTimeOffsetTable.some(e=>0!==e.sampleCompositionTimeOffset);return I("stbl",null,[ee(e),oe(e),he(e),le(e),de(e),fe(e),t?ue(e):null])},ee=e=>N("stsd",0,0,[v(1)],["video"===e.info.type?te(Se[e.info.codec],e):ne(ze[e.info.codec],e)]),te=(e,t)=>{return I(e,[Array(6).fill(0),T(1),T(0),T(0),Array(12).fill(0),T(t.info.width),T(t.info.height),v(4718592),v(4718592),v(0),T(1),Array(32).fill(0),T(24),(i=65535,y.setInt16(0,i,!1),[b[0],b[1]])],[xe[t.info.codec](t),t.info.decoderConfig.colorSpace?re(t):null]);var i},ie={bt709:1,bt470bg:5,smpte170m:6},se={bt709:1,smpte170m:6,"iec61966-2-1":13},ae={rgb:0,bt709:1,bt470bg:5,smpte170m:6},re=e=>I("colr",[A("nclx"),T(ie[e.info.decoderConfig.colorSpace.primaries]),T(se[e.info.decoderConfig.colorSpace.transfer]),T(ae[e.info.decoderConfig.colorSpace.matrix]),k((e.info.decoderConfig.colorSpace.fullRange?1:0)<<7)]),ne=(e,t)=>I(e,[Array(6).fill(0),T(1),T(0),T(0),v(0),T(t.info.numberOfChannels),T(16),T(0),T(0),z(t.info.sampleRate)],[Ee[t.info.codec](t)]),oe=e=>N("stts",0,0,[v(e.timeToSampleTable.length),e.timeToSampleTable.map(e=>[v(e.sampleCount),v(e.sampleDelta)])]),he=e=>{if(e.samples.every(e=>"key"===e.type))return null;let t=[...e.samples.entries()].filter(([,e])=>"key"===e.type);return N("stss",0,0,[v(t.length),t.map(([e])=>v(e+1))])},le=e=>N("stsc",0,0,[v(e.compactlyCodedChunkTable.length),e.compactlyCodedChunkTable.map(e=>[v(e.firstChunk),v(e.samplesPerChunk),v(1)])]),de=e=>N("stsz",0,0,[v(0),v(e.samples.length),e.samples.map(e=>v(e.size))]),fe=e=>e.finalizedChunks.length>0&&M(e.finalizedChunks).offset>=2**32?N("co64",0,0,[v(e.finalizedChunks.length),e.finalizedChunks.map(e=>S(e.offset))]):N("stco",0,0,[v(e.finalizedChunks.length),e.finalizedChunks.map(e=>v(e.offset))]),ue=e=>N("ctts",0,0,[v(e.compositionTimeOffsetTable.length),e.compositionTimeOffsetTable.map(e=>[v(e.sampleCount),v(e.sampleCompositionTimeOffset)])]),me=e=>I("mvex",null,e.map(pe)),pe=e=>N("trex",0,0,[v(e.id),v(1),v(0),v(0),v(0)]),ce=(e,t)=>I("moof",null,[we(e),...t.map(be)]),we=e=>N("mfhd",0,0,[v(e)]),ge=e=>{let t=0,i=0,s="delta"===e.type;return i|=+s,t|=s?1:2,t<<24|i<<16},be=e=>I("traf",null,[ye(e),ke(e),Te(e)]),ye=e=>{let t=0;t|=8,t|=16,t|=32,t|=131072;let i=e.currentChunk.samples[1]??e.currentChunk.samples[0],s={duration:i.timescaleUnitsToNextSample,size:i.size,flags:ge(i)};return N("tfhd",0,131128,[v(e.id),v(s.duration),v(s.size),v(s.flags)])},ke=e=>N("tfdt",1,0,[S(O(e.currentChunk.startTimestamp,e.timescale))]),Te=e=>{let t=e.currentChunk.samples.map(e=>e.timescaleUnitsToNextSample),i=e.currentChunk.samples.map(e=>e.size),s=e.currentChunk.samples.map(ge),a=e.currentChunk.samples.map(t=>O(t.presentationTimestamp-t.decodeTimestamp,e.timescale)),r=new Set(t),n=new Set(i),o=new Set(s),h=new Set(a),l=2===o.size&&s[0]!==s[1],d=r.size>1,f=n.size>1,u=!l&&o.size>1,m=h.size>1||[...h].some(e=>0!==e),p=0;return p|=1,p|=4*+l,p|=256*+d,p|=512*+f,p|=1024*+u,p|=2048*+m,N("trun",1,p,[v(e.currentChunk.samples.length),v(e.currentChunk.offset-e.currentChunk.moofOffset||0),l?v(s[0]):[],e.currentChunk.samples.map((e,r)=>{return[d?v(t[r]):[],f?v(i[r]):[],u?v(s[r]):[],m?(n=a[r],y.setInt32(0,n,!1),[b[0],b[1],b[2],b[3]]):[]];var n})])},Ce=(e,t)=>N("tfra",1,0,[v(e.id),v(63),v(e.finalizedChunks.length),e.finalizedChunks.map(i=>[S(O(i.startTimestamp,e.timescale)),S(i.moofOffset),v(t+1),v(1),v(1)])]),ve=()=>N("mfro",0,0,[v(0)]),Se={avc:"avc1",hevc:"hvc1",vp9:"vp09",av1:"av01"},xe={avc:e=>e.info.decoderConfig&&I("avcC",[...new Uint8Array(e.info.decoderConfig.description)]),hevc:e=>e.info.decoderConfig&&I("hvcC",[...new Uint8Array(e.info.decoderConfig.description)]),vp9:e=>{if(!e.info.decoderConfig)return null;let t=e.info.decoderConfig;if(!t.colorSpace)throw new Error("'colorSpace' is required in the decoder config for VP9.");let i=t.codec.split("."),s=Number(i[1]),a=Number(i[2]),r=0+(Number(i[3])<<4)+Number(t.colorSpace.fullRange);return N("vpcC",1,0,[k(s),k(a),k(r),k(2),k(2),k(2),T(0)])},av1:()=>I("av1C",[129,0,0,0])},ze={aac:"mp4a",opus:"Opus"},Ee={aac:e=>{let t=new Uint8Array(e.info.decoderConfig.description);return N("esds",0,0,[v(58753152),k(32+t.byteLength),T(1),k(0),v(75530368),k(18+t.byteLength),k(64),k(21),C(0),v(130071),v(130071),v(92307584),k(t.byteLength),...t,v(109084800),k(1),k(2)])},opus:e=>{let t=3840,i=0;const s=e.info.decoderConfig?.description;if(s){if(s.byteLength<18)throw new TypeError("Invalid decoder description provided for Opus; must be at least 18 bytes long.");const e=ArrayBuffer.isView(s)?new DataView(s.buffer,s.byteOffset,s.byteLength):new DataView(s);t=e.getUint16(10,!0),i=e.getInt16(14,!0)}return I("dOps",[k(0),k(e.info.numberOfChannels),T(t),v(e.info.sampleRate),x(i),k(0)])}},Ae=(Symbol("isTarget"),class{}),Me=class extends Ae{constructor(){super(...arguments),this.buffer=null}},We=class extends Ae{constructor(e){if(super(),this.options=e,"object"!=typeof e)throw new TypeError("StreamTarget requires an options object to be passed to its constructor.");if(e.onData){if("function"!=typeof e.onData)throw new TypeError("options.onData, when provided, must be a function.");if(e.onData.length<2)throw new TypeError("options.onData, when provided, must be a function that takes in at least two arguments (data and position). Ignoring the position argument, which specifies the byte offset at which the data is to be written, can lead to broken outputs.")}if(void 0!==e.chunked&&"boolean"!=typeof e.chunked)throw new TypeError("options.chunked, when provided, must be a boolean.");if(void 0!==e.chunkSize&&(!Number.isInteger(e.chunkSize)||e.chunkSize<1024))throw new TypeError("options.chunkSize, when provided, must be an integer and not smaller than 1024.")}},Oe=class extends Ae{constructor(e,t){if(super(),this.stream=e,this.options=t,!(e instanceof FileSystemWritableFileStream))throw new TypeError("FileSystemWritableFileStreamTarget requires a FileSystemWritableFileStream instance.");if(void 0!==t&&"object"!=typeof t)throw new TypeError("FileSystemWritableFileStreamTarget's options, when provided, must be an object.");if(t&&void 0!==t.chunkSize&&(!Number.isInteger(t.chunkSize)||t.chunkSize<=0))throw new TypeError("options.chunkSize, when provided, must be a positive integer")}},Be=class{constructor(){this.pos=0,n(this,d,new Uint8Array(8)),n(this,f,new DataView(r(this,d).buffer)),this.offsets=new WeakMap}seek(e){this.pos=e}writeU32(e){r(this,f).setUint32(0,e,!1),this.write(r(this,d).subarray(0,4))}writeU64(e){r(this,f).setUint32(0,Math.floor(e/2**32),!1),r(this,f).setUint32(4,e,!1),this.write(r(this,d).subarray(0,8))}writeAscii(e){for(let t=0;t<e.length;t++)r(this,f).setUint8(t%8,e.charCodeAt(t)),t%8==7&&this.write(r(this,d));e.length%8!=0&&this.write(r(this,d).subarray(0,e.length%8))}writeBox(e){if(this.offsets.set(e,this.pos),e.contents&&!e.children)this.writeBoxHeader(e,e.size??e.contents.byteLength+8),this.write(e.contents);else{let t=this.pos;if(this.writeBoxHeader(e,0),e.contents&&this.write(e.contents),e.children)for(let t of e.children)t&&this.writeBox(t);let i=this.pos,s=e.size??i-t;this.seek(t),this.writeBoxHeader(e,s),this.seek(i)}}writeBoxHeader(e,t){this.writeU32(e.largeSize?1:t),this.writeAscii(e.type),e.largeSize&&this.writeU64(t)}measureBoxHeader(e){return 8+(e.largeSize?8:0)}patchBox(e){let t=this.pos;this.seek(this.offsets.get(e)),this.writeBox(e),this.seek(t)}measureBox(e){if(e.contents&&!e.children){return this.measureBoxHeader(e)+e.contents.byteLength}{let t=this.measureBoxHeader(e);if(e.contents&&(t+=e.contents.byteLength),e.children)for(let i of e.children)i&&(t+=this.measureBox(i));return t}}};d=new WeakMap,f=new WeakMap;var Ue=class extends Be{constructor(e){super(),n(this,w),n(this,u,void 0),n(this,m,new ArrayBuffer(65536)),n(this,p,new Uint8Array(r(this,m))),n(this,c,0),o(this,u,e)}write(e){h(this,w,g).call(this,this.pos+e.byteLength),r(this,p).set(e,this.pos),this.pos+=e.byteLength,o(this,c,Math.max(r(this,c),this.pos))}finalize(){h(this,w,g).call(this,this.pos),r(this,u).buffer=r(this,m).slice(0,Math.max(r(this,c),this.pos))}};u=new WeakMap,m=new WeakMap,p=new WeakMap,c=new WeakMap,w=new WeakSet,g=function(e){let t=r(this,m).byteLength;for(;t<e;)t*=2;if(t===r(this,m).byteLength)return;let i=new ArrayBuffer(t),s=new Uint8Array(i);s.set(r(this,p),0),o(this,m,i),o(this,p,s)};var De,je,Re,Ie,Ne,Ve,Fe,Le,$e,Pe,He,_e,qe,Ge=class extends Be{constructor(e){super(),n(this,Ve),n(this,Le),n(this,Pe),n(this,_e),n(this,De,void 0),n(this,je,[]),n(this,Re,void 0),n(this,Ie,void 0),n(this,Ne,[]),o(this,De,e),o(this,Re,e.options?.chunked??!1),o(this,Ie,e.options?.chunkSize??16777216)}write(e){r(this,je).push({data:e.slice(),start:this.pos}),this.pos+=e.byteLength}flush(){if(0===r(this,je).length)return;let e=[],t=[...r(this,je)].sort((e,t)=>e.start-t.start);e.push({start:t[0].start,size:t[0].data.byteLength});for(let i=1;i<t.length;i++){let s=e[e.length-1],a=t[i];a.start<=s.start+s.size?s.size=Math.max(s.size,a.start+a.data.byteLength-s.start):e.push({start:a.start,size:a.data.byteLength})}for(let t of e){t.data=new Uint8Array(t.size);for(let e of r(this,je))t.start<=e.start&&e.start<t.start+t.size&&t.data.set(e.data,e.start-t.start);r(this,Re)?(h(this,Ve,Fe).call(this,t.data,t.start),h(this,_e,qe).call(this)):r(this,De).options.onData?.(t.data,t.start)}r(this,je).length=0}finalize(){r(this,Re)&&h(this,_e,qe).call(this,!0)}};De=new WeakMap,je=new WeakMap,Re=new WeakMap,Ie=new WeakMap,Ne=new WeakMap,Ve=new WeakSet,Fe=function(e,t){let i=r(this,Ne).findIndex(e=>e.start<=t&&t<e.start+r(this,Ie));-1===i&&(i=h(this,Pe,He).call(this,t));let s=r(this,Ne)[i],a=t-s.start,n=e.subarray(0,Math.min(r(this,Ie)-a,e.byteLength));s.data.set(n,a);let o={start:a,end:a+n.byteLength};if(h(this,Le,$e).call(this,s,o),0===s.written[0].start&&s.written[0].end===r(this,Ie)&&(s.shouldFlush=!0),r(this,Ne).length>2){for(let e=0;e<r(this,Ne).length-1;e++)r(this,Ne)[e].shouldFlush=!0;h(this,_e,qe).call(this)}n.byteLength<e.byteLength&&h(this,Ve,Fe).call(this,e.subarray(n.byteLength),t+n.byteLength)},Le=new WeakSet,$e=function(e,t){let i=0,s=e.written.length-1,a=-1;for(;i<=s;){let r=Math.floor(i+(s-i+1)/2);e.written[r].start<=t.start?(i=r+1,a=r):s=r-1}for(e.written.splice(a+1,0,t),(-1===a||e.written[a].end<t.start)&&a++;a<e.written.length-1&&e.written[a].end>=e.written[a+1].start;)e.written[a].end=Math.max(e.written[a].end,e.written[a+1].end),e.written.splice(a+1,1)},Pe=new WeakSet,He=function(e){let t={start:Math.floor(e/r(this,Ie))*r(this,Ie),data:new Uint8Array(r(this,Ie)),written:[],shouldFlush:!1};return r(this,Ne).push(t),r(this,Ne).sort((e,t)=>e.start-t.start),r(this,Ne).indexOf(t)},_e=new WeakSet,qe=function(e=!1){for(let t=0;t<r(this,Ne).length;t++){let i=r(this,Ne)[t];if(i.shouldFlush||e){for(let e of i.written)r(this,De).options.onData?.(i.data.subarray(e.start,e.end),i.start+e.start);r(this,Ne).splice(t--,1)}}};var Je,Ke,Qe,Xe,Ye,Ze,et,tt,it,st,at,rt,nt,ot,ht,lt,dt,ft,ut,mt,pt,ct,wt,gt,bt,yt,kt,Tt,Ct,vt,St,xt,zt,Et,At,Mt,Wt,Ot=class extends Ge{constructor(e){super(new We({onData:(t,i)=>e.stream.write({type:"write",data:t,position:i}),chunked:!0,chunkSize:e.options?.chunkSize}))}},Bt=1e3,Ut=["avc","hevc","vp9","av1"],Dt=["aac","opus"],jt=["strict","offset","cross-track-offset"],Rt=class{constructor(e){if(n(this,nt),n(this,ht),n(this,dt),n(this,ut),n(this,pt),n(this,wt),n(this,bt),n(this,kt),n(this,Ct),n(this,St),n(this,zt),n(this,At),n(this,Je,void 0),n(this,Ke,void 0),n(this,Qe,void 0),n(this,Xe,void 0),n(this,Ye,null),n(this,Ze,null),n(this,et,Math.floor(Date.now()/1e3)+2082844800),n(this,tt,[]),n(this,it,1),n(this,st,[]),n(this,at,[]),n(this,rt,!1),h(this,nt,ot).call(this,e),e.video=j(e.video),e.audio=j(e.audio),e.fastStart=j(e.fastStart),this.target=e.target,o(this,Je,{firstTimestampBehavior:"strict",...e}),e.target instanceof Me)o(this,Ke,new Ue(e.target));else if(e.target instanceof We)o(this,Ke,new Ge(e.target));else{if(!(e.target instanceof Oe))throw new Error(`Invalid target: ${e.target}`);o(this,Ke,new Ot(e.target))}h(this,ut,mt).call(this),h(this,ht,lt).call(this)}addVideoChunk(e,t,i,s){if(!(e instanceof EncodedVideoChunk))throw new TypeError("addVideoChunk's first argument (sample) must be of type EncodedVideoChunk.");if(t&&"object"!=typeof t)throw new TypeError("addVideoChunk's second argument (meta), when provided, must be an object.");if(void 0!==i&&(!Number.isFinite(i)||i<0))throw new TypeError("addVideoChunk's third argument (timestamp), when provided, must be a non-negative real number.");if(void 0!==s&&!Number.isFinite(s))throw new TypeError("addVideoChunk's fourth argument (compositionTimeOffset), when provided, must be a real number.");let a=new Uint8Array(e.byteLength);e.copyTo(a),this.addVideoChunkRaw(a,e.type,i??e.timestamp,e.duration,t,s)}addVideoChunkRaw(e,t,i,s,a,n){if(!(e instanceof Uint8Array))throw new TypeError("addVideoChunkRaw's first argument (data) must be an instance of Uint8Array.");if("key"!==t&&"delta"!==t)throw new TypeError("addVideoChunkRaw's second argument (type) must be either 'key' or 'delta'.");if(!Number.isFinite(i)||i<0)throw new TypeError("addVideoChunkRaw's third argument (timestamp) must be a non-negative real number.");if(!Number.isFinite(s)||s<0)throw new TypeError("addVideoChunkRaw's fourth argument (duration) must be a non-negative real number.");if(a&&"object"!=typeof a)throw new TypeError("addVideoChunkRaw's fifth argument (meta), when provided, must be an object.");if(void 0!==n&&!Number.isFinite(n))throw new TypeError("addVideoChunkRaw's sixth argument (compositionTimeOffset), when provided, must be a real number.");if(h(this,At,Mt).call(this),!r(this,Je).video)throw new Error("No video track declared.");if("object"==typeof r(this,Je).fastStart&&r(this,Ye).samples.length===r(this,Je).fastStart.expectedVideoChunks)throw new Error(`Cannot add more video chunks than specified in 'fastStart' (${r(this,Je).fastStart.expectedVideoChunks}).`);let o=h(this,wt,gt).call(this,r(this,Ye),e,t,i,s,a,n);if("fragmented"===r(this,Je).fastStart&&r(this,Ze)){for(;r(this,at).length>0&&r(this,at)[0].decodeTimestamp<=o.decodeTimestamp;){let e=r(this,at).shift();h(this,bt,yt).call(this,r(this,Ze),e)}o.decodeTimestamp<=r(this,Ze).lastDecodeTimestamp?h(this,bt,yt).call(this,r(this,Ye),o):r(this,st).push(o)}else h(this,bt,yt).call(this,r(this,Ye),o)}addAudioChunk(e,t,i){if(!(e instanceof EncodedAudioChunk))throw new TypeError("addAudioChunk's first argument (sample) must be of type EncodedAudioChunk.");if(t&&"object"!=typeof t)throw new TypeError("addAudioChunk's second argument (meta), when provided, must be an object.");if(void 0!==i&&(!Number.isFinite(i)||i<0))throw new TypeError("addAudioChunk's third argument (timestamp), when provided, must be a non-negative real number.");let s=new Uint8Array(e.byteLength);e.copyTo(s),this.addAudioChunkRaw(s,e.type,i??e.timestamp,e.duration,t)}addAudioChunkRaw(e,t,i,s,a){if(!(e instanceof Uint8Array))throw new TypeError("addAudioChunkRaw's first argument (data) must be an instance of Uint8Array.");if("key"!==t&&"delta"!==t)throw new TypeError("addAudioChunkRaw's second argument (type) must be either 'key' or 'delta'.");if(!Number.isFinite(i)||i<0)throw new TypeError("addAudioChunkRaw's third argument (timestamp) must be a non-negative real number.");if(!Number.isFinite(s)||s<0)throw new TypeError("addAudioChunkRaw's fourth argument (duration) must be a non-negative real number.");if(a&&"object"!=typeof a)throw new TypeError("addAudioChunkRaw's fifth argument (meta), when provided, must be an object.");if(h(this,At,Mt).call(this),!r(this,Je).audio)throw new Error("No audio track declared.");if("object"==typeof r(this,Je).fastStart&&r(this,Ze).samples.length===r(this,Je).fastStart.expectedAudioChunks)throw new Error(`Cannot add more audio chunks than specified in 'fastStart' (${r(this,Je).fastStart.expectedAudioChunks}).`);let n=h(this,wt,gt).call(this,r(this,Ze),e,t,i,s,a);if("fragmented"===r(this,Je).fastStart&&r(this,Ye)){for(;r(this,st).length>0&&r(this,st)[0].decodeTimestamp<=n.decodeTimestamp;){let e=r(this,st).shift();h(this,bt,yt).call(this,r(this,Ye),e)}n.decodeTimestamp<=r(this,Ye).lastDecodeTimestamp?h(this,bt,yt).call(this,r(this,Ze),n):r(this,at).push(n)}else h(this,bt,yt).call(this,r(this,Ze),n)}finalize(){if(r(this,rt))throw new Error("Cannot finalize a muxer more than once.");if("fragmented"===r(this,Je).fastStart){for(let e of r(this,st))h(this,bt,yt).call(this,r(this,Ye),e);for(let e of r(this,at))h(this,bt,yt).call(this,r(this,Ze),e);h(this,St,xt).call(this,!1)}else r(this,Ye)&&h(this,Ct,vt).call(this,r(this,Ye)),r(this,Ze)&&h(this,Ct,vt).call(this,r(this,Ze));let e=[r(this,Ye),r(this,Ze)].filter(Boolean);if("in-memory"===r(this,Je).fastStart){let t;for(let i=0;i<2;i++){let i=F(e,r(this,et)),s=r(this,Ke).measureBox(i);t=r(this,Ke).measureBox(r(this,Xe));let a=r(this,Ke).pos+s+t;for(let e of r(this,tt)){e.offset=a;for(let{data:i}of e.samples)a+=i.byteLength,t+=i.byteLength}if(a<2**32)break;t>=2**32&&(r(this,Xe).largeSize=!0)}let i=F(e,r(this,et));r(this,Ke).writeBox(i),r(this,Xe).size=t,r(this,Ke).writeBox(r(this,Xe));for(let e of r(this,tt))for(let t of e.samples)r(this,Ke).write(t.data),t.data=null}else if("fragmented"===r(this,Je).fastStart){let t=r(this,Ke).pos,i=(e=>I("mfra",null,[...e.map(Ce),ve()]))(e);r(this,Ke).writeBox(i);let s=r(this,Ke).pos-t;r(this,Ke).seek(r(this,Ke).pos-4),r(this,Ke).writeU32(s)}else{let t=r(this,Ke).offsets.get(r(this,Xe)),i=r(this,Ke).pos-t;r(this,Xe).size=i,r(this,Xe).largeSize=i>=2**32,r(this,Ke).patchBox(r(this,Xe));let s=F(e,r(this,et));if("object"==typeof r(this,Je).fastStart){r(this,Ke).seek(r(this,Qe)),r(this,Ke).writeBox(s);let e=t-r(this,Ke).pos;r(this,Ke).writeBox({type:"free",size:e})}else r(this,Ke).writeBox(s)}h(this,zt,Et).call(this),r(this,Ke).finalize(),o(this,rt,!0)}};return Je=new WeakMap,Ke=new WeakMap,Qe=new WeakMap,Xe=new WeakMap,Ye=new WeakMap,Ze=new WeakMap,et=new WeakMap,tt=new WeakMap,it=new WeakMap,st=new WeakMap,at=new WeakMap,rt=new WeakMap,nt=new WeakSet,ot=function(e){if("object"!=typeof e)throw new TypeError("The muxer requires an options object to be passed to its constructor.");if(!(e.target instanceof Ae))throw new TypeError("The target must be provided and an instance of Target.");if(e.video){if(!Ut.includes(e.video.codec))throw new TypeError(`Unsupported video codec: ${e.video.codec}`);if(!Number.isInteger(e.video.width)||e.video.width<=0)throw new TypeError(`Invalid video width: ${e.video.width}. Must be a positive integer.`);if(!Number.isInteger(e.video.height)||e.video.height<=0)throw new TypeError(`Invalid video height: ${e.video.height}. Must be a positive integer.`);const t=e.video.rotation;if("number"==typeof t&&![0,90,180,270].includes(t))throw new TypeError(`Invalid video rotation: ${t}. Has to be 0, 90, 180 or 270.`);if(Array.isArray(t)&&(9!==t.length||t.some(e=>"number"!=typeof e)))throw new TypeError(`Invalid video transformation matrix: ${t.join()}`);if(void 0!==e.video.frameRate&&(!Number.isInteger(e.video.frameRate)||e.video.frameRate<=0))throw new TypeError(`Invalid video frame rate: ${e.video.frameRate}. Must be a positive integer.`)}if(e.audio){if(!Dt.includes(e.audio.codec))throw new TypeError(`Unsupported audio codec: ${e.audio.codec}`);if(!Number.isInteger(e.audio.numberOfChannels)||e.audio.numberOfChannels<=0)throw new TypeError(`Invalid number of audio channels: ${e.audio.numberOfChannels}. Must be a positive integer.`);if(!Number.isInteger(e.audio.sampleRate)||e.audio.sampleRate<=0)throw new TypeError(`Invalid audio sample rate: ${e.audio.sampleRate}. Must be a positive integer.`)}if(e.firstTimestampBehavior&&!jt.includes(e.firstTimestampBehavior))throw new TypeError(`Invalid first timestamp behavior: ${e.firstTimestampBehavior}`);if("object"==typeof e.fastStart){if(e.video){if(void 0===e.fastStart.expectedVideoChunks)throw new TypeError("'fastStart' is an object but is missing property 'expectedVideoChunks'.");if(!Number.isInteger(e.fastStart.expectedVideoChunks)||e.fastStart.expectedVideoChunks<0)throw new TypeError("'expectedVideoChunks' must be a non-negative integer.")}if(e.audio){if(void 0===e.fastStart.expectedAudioChunks)throw new TypeError("'fastStart' is an object but is missing property 'expectedAudioChunks'.");if(!Number.isInteger(e.fastStart.expectedAudioChunks)||e.fastStart.expectedAudioChunks<0)throw new TypeError("'expectedAudioChunks' must be a non-negative integer.")}}else if(![!1,"in-memory","fragmented"].includes(e.fastStart))throw new TypeError("'fastStart' option must be false, 'in-memory', 'fragmented' or an object.");if(void 0!==e.minFragmentDuration&&(!Number.isFinite(e.minFragmentDuration)||e.minFragmentDuration<0))throw new TypeError("'minFragmentDuration' must be a non-negative number.")},ht=new WeakSet,lt=function(){var e;if(r(this,Ke).writeBox((e={holdsAvc:"avc"===r(this,Je).video?.codec,fragmented:"fragmented"===r(this,Je).fastStart}).fragmented?I("ftyp",[A("iso5"),v(512),A("iso5"),A("iso6"),A("mp41")]):I("ftyp",[A("isom"),v(512),A("isom"),e.holdsAvc?A("avc1"):[],A("mp41")])),o(this,Qe,r(this,Ke).pos),"in-memory"===r(this,Je).fastStart)o(this,Xe,V(!1));else if("fragmented"===r(this,Je).fastStart);else{if("object"==typeof r(this,Je).fastStart){let e=h(this,dt,ft).call(this);r(this,Ke).seek(r(this,Ke).pos+e)}o(this,Xe,V(!0)),r(this,Ke).writeBox(r(this,Xe))}h(this,zt,Et).call(this)},dt=new WeakSet,ft=function(){if("object"!=typeof r(this,Je).fastStart)return;let e=0,t=[r(this,Je).fastStart.expectedVideoChunks,r(this,Je).fastStart.expectedAudioChunks];for(let i of t)i&&(e+=8*Math.ceil(2/3*i),e+=4*i,e+=12*Math.ceil(2/3*i),e+=4*i,e+=8*i);return e+=4096,e},ut=new WeakSet,mt=function(){if(r(this,Je).video&&o(this,Ye,{id:1,info:{type:"video",codec:r(this,Je).video.codec,width:r(this,Je).video.width,height:r(this,Je).video.height,rotation:r(this,Je).video.rotation??0,decoderConfig:null},timescale:r(this,Je).video.frameRate??57600,samples:[],finalizedChunks:[],currentChunk:null,firstDecodeTimestamp:void 0,lastDecodeTimestamp:-1,timeToSampleTable:[],compositionTimeOffsetTable:[],lastTimescaleUnits:null,lastSample:null,compactlyCodedChunkTable:[]}),r(this,Je).audio&&(o(this,Ze,{id:r(this,Je).video?2:1,info:{type:"audio",codec:r(this,Je).audio.codec,numberOfChannels:r(this,Je).audio.numberOfChannels,sampleRate:r(this,Je).audio.sampleRate,decoderConfig:null},timescale:r(this,Je).audio.sampleRate,samples:[],finalizedChunks:[],currentChunk:null,firstDecodeTimestamp:void 0,lastDecodeTimestamp:-1,timeToSampleTable:[],compositionTimeOffsetTable:[],lastTimescaleUnits:null,lastSample:null,compactlyCodedChunkTable:[]}),"aac"===r(this,Je).audio.codec)){let e=h(this,pt,ct).call(this,2,r(this,Je).audio.sampleRate,r(this,Je).audio.numberOfChannels);r(this,Ze).info.decoderConfig={codec:r(this,Je).audio.codec,description:e,numberOfChannels:r(this,Je).audio.numberOfChannels,sampleRate:r(this,Je).audio.sampleRate}}},pt=new WeakSet,ct=function(e,t,i){let s=[96e3,88200,64e3,48e3,44100,32e3,24e3,22050,16e3,12e3,11025,8e3,7350].indexOf(t),a=i,r="";r+=e.toString(2).padStart(5,"0"),r+=s.toString(2).padStart(4,"0"),15===s&&(r+=t.toString(2).padStart(24,"0")),r+=a.toString(2).padStart(4,"0");let n=8*Math.ceil(r.length/8);r=r.padEnd(n,"0");let o=new Uint8Array(r.length/8);for(let e=0;e<r.length;e+=8)o[e/8]=parseInt(r.slice(e,e+8),2);return o},wt=new WeakSet,gt=function(e,t,i,s,a,r,n){let o=s/1e6,l=(s-(n??0))/1e6,d=a/1e6,f=h(this,kt,Tt).call(this,o,l,e);return o=f.presentationTimestamp,l=f.decodeTimestamp,r?.decoderConfig&&(null===e.info.decoderConfig?e.info.decoderConfig=r.decoderConfig:Object.assign(e.info.decoderConfig,r.decoderConfig)),{presentationTimestamp:o,decodeTimestamp:l,duration:d,data:t,size:t.byteLength,type:i,timescaleUnitsToNextSample:O(d,e.timescale)}},bt=new WeakSet,yt=function(e,t){"fragmented"!==r(this,Je).fastStart&&e.samples.push(t);const i=O(t.presentationTimestamp-t.decodeTimestamp,e.timescale);if(null!==e.lastTimescaleUnits){let s=O(t.decodeTimestamp,e.timescale,!1),a=Math.round(s-e.lastTimescaleUnits);if(e.lastTimescaleUnits+=a,e.lastSample.timescaleUnitsToNextSample=a,"fragmented"!==r(this,Je).fastStart){let t=M(e.timeToSampleTable);1===t.sampleCount?(t.sampleDelta=a,t.sampleCount++):t.sampleDelta===a?t.sampleCount++:(t.sampleCount--,e.timeToSampleTable.push({sampleCount:2,sampleDelta:a}));const s=M(e.compositionTimeOffsetTable);s.sampleCompositionTimeOffset===i?s.sampleCount++:e.compositionTimeOffsetTable.push({sampleCount:1,sampleCompositionTimeOffset:i})}}else e.lastTimescaleUnits=0,"fragmented"!==r(this,Je).fastStart&&(e.timeToSampleTable.push({sampleCount:1,sampleDelta:O(t.duration,e.timescale)}),e.compositionTimeOffsetTable.push({sampleCount:1,sampleCompositionTimeOffset:i}));e.lastSample=t;let s=!1;if(e.currentChunk){let i=t.presentationTimestamp-e.currentChunk.startTimestamp;if("fragmented"===r(this,Je).fastStart){let a=r(this,Ye)??r(this,Ze);const n=r(this,Je).minFragmentDuration??1;e===a&&"key"===t.type&&i>=n&&(s=!0,h(this,St,xt).call(this))}else s=i>=.5}else s=!0;s&&(e.currentChunk&&h(this,Ct,vt).call(this,e),e.currentChunk={startTimestamp:t.presentationTimestamp,samples:[]}),e.currentChunk.samples.push(t)},kt=new WeakSet,Tt=function(e,t,i){const s="strict"===r(this,Je).firstTimestampBehavior,a=-1===i.lastDecodeTimestamp;if(s&&a&&0!==t)throw new Error(`The first chunk for your media track must have a timestamp of 0 (received DTS=${t}).Non-zero first timestamps are often caused by directly piping frames or audio data from a MediaStreamTrack into the encoder. Their timestamps are typically relative to the age of thedocument, which is probably what you want.\n\nIf you want to offset all timestamps of a track such that the first one is zero, set firstTimestampBehavior: 'offset' in the options.\n`);if("offset"===r(this,Je).firstTimestampBehavior||"cross-track-offset"===r(this,Je).firstTimestampBehavior){let s;void 0===i.firstDecodeTimestamp&&(i.firstDecodeTimestamp=t),s="offset"===r(this,Je).firstTimestampBehavior?i.firstDecodeTimestamp:Math.min(r(this,Ye)?.firstDecodeTimestamp??1/0,r(this,Ze)?.firstDecodeTimestamp??1/0),t-=s,e-=s}if(t<i.lastDecodeTimestamp)throw new Error(`Timestamps must be monotonically increasing (DTS went from ${1e6*i.lastDecodeTimestamp} to ${1e6*t}).`);return i.lastDecodeTimestamp=t,{presentationTimestamp:e,decodeTimestamp:t}},Ct=new WeakSet,vt=function(e){if("fragmented"===r(this,Je).fastStart)throw new Error("Can't finalize individual chunks if 'fastStart' is set to 'fragmented'.");if(e.currentChunk)if(e.finalizedChunks.push(e.currentChunk),r(this,tt).push(e.currentChunk),0!==e.compactlyCodedChunkTable.length&&M(e.compactlyCodedChunkTable).samplesPerChunk===e.currentChunk.samples.length||e.compactlyCodedChunkTable.push({firstChunk:e.finalizedChunks.length,samplesPerChunk:e.currentChunk.samples.length}),"in-memory"!==r(this,Je).fastStart){e.currentChunk.offset=r(this,Ke).pos;for(let t of e.currentChunk.samples)r(this,Ke).write(t.data),t.data=null;h(this,zt,Et).call(this)}else e.currentChunk.offset=0},St=new WeakSet,xt=function(e=!0){if("fragmented"!==r(this,Je).fastStart)throw new Error("Can't finalize a fragment unless 'fastStart' is set to 'fragmented'.");let t=[r(this,Ye),r(this,Ze)].filter(e=>e&&e.currentChunk);if(0===t.length)return;let i=(s=this,a=it,{set _(e){o(s,a,e,n)},get _(){return r(s,a,l)}})._++;var s,a,n,l;if(1===i){let e=F(t,r(this,et),!0);r(this,Ke).writeBox(e)}let d=r(this,Ke).pos,f=ce(i,t);r(this,Ke).writeBox(f);{let e=V(!1),i=0;for(let e of t)for(let t of e.currentChunk.samples)i+=t.size;let s=r(this,Ke).measureBox(e)+i;s>=2**32&&(e.largeSize=!0,s=r(this,Ke).measureBox(e)+i),e.size=s,r(this,Ke).writeBox(e)}for(let e of t){e.currentChunk.offset=r(this,Ke).pos,e.currentChunk.moofOffset=d;for(let t of e.currentChunk.samples)r(this,Ke).write(t.data),t.data=null}let u=r(this,Ke).pos;r(this,Ke).seek(r(this,Ke).offsets.get(f));let m=ce(i,t);r(this,Ke).writeBox(m),r(this,Ke).seek(u);for(let e of t)e.finalizedChunks.push(e.currentChunk),r(this,tt).push(e.currentChunk),e.currentChunk=null;e&&h(this,zt,Et).call(this)},zt=new WeakSet,Et=function(){r(this,Ke)instanceof Ge&&r(this,Ke).flush()},At=new WeakSet,Mt=function(){if(r(this,rt))throw new Error("Cannot add new video or audio chunks after the file has been finalized.")},Wt=l,((a,r,n,o)=>{if(r&&"object"==typeof r||"function"==typeof r)for(let h of i(r))s.call(a,h)||h===n||e(a,h,{get:()=>r[h],enumerable:!(o=t(r,h))||o.enumerable});return a})(e({},"__esModule",{value:!0}),Wt)})();"object"==typeof module&&"object"==typeof module.exports&&Object.assign(module.exports,Mp4Muxer);
 (function(){
 'use strict';
 var $ = function(id){ return document.getElementById(id); };
@@ -526,55 +634,219 @@ var el = {
 };
 var octx = el.overlay.getContext('2d');
 var S = {
+  outKind:'video',
   hasVideo:false, fps:60, frames:0, vw:1920, vh:1080,
   points:[], sel:-1, launch:null, landing:null,
-  curve:'smooth', timing:'auto', color:'#ff3b30', width:5, glow:true, dot:true, slow:1.6, style:'snake', tail:0.6, fade:true,
+  curve:'smooth', timing:'follow', color:'#ff3b30', width:5, glow:true, dot:true, persp:0.85, apexF:null, arc:null, style:'snake', tail:0.6, fade:true, insert:'end',
   carry:0, unit:'yd', badgePos:'tr', showBadge:true, countUp:true,
   view:{z:1,cx:0.5,cy:0.5}, panMode:false, panning:null,
-  clip:'shot', size:'1080', sound:false, speed:1,
+  clip:'shot', size:'1080', sound:true, hear:true, speed:1,
   playing:false, exporting:false, drag:null, pending:null, previewEnd:null
 };
-var PREF='flightline.prefs.v1', PREF_KEYS=['curve','timing','color','width','glow','dot','slow','style','tail','fade','unit','badgePos','showBadge','countUp','clip','size','sound'];
+var PREF='flightline.prefs.v1', PREF_KEYS=['curve','timing','color','width','glow','dot','persp','style','tail','fade','unit','badgePos','showBadge','countUp','clip','size','sound','hear'];
 var hist=[], pathCache=null, objectUrl=null, resultUrl=null, resultBlob=null, resultName='', dl=null, cancelFlag=false;
 var cssW=0, cssH=0, loopTok=0;
 var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var COLORS=[['#ff3b30','Red'],['#ffffff','White'],['#ffd60a','Yellow'],['#ff9f0a','Orange'],['#32d4ff','Cyan'],['#7dff6a','Green']];
 
-function loadPrefs(){ try{ var p=JSON.parse(localStorage.getItem(PREF)||'{}'); PREF_KEYS.forEach(function(k){ if(k in p) S[k]=p[k]; }); }catch(e){} }
-function savePrefs(){ try{ var o={}; PREF_KEYS.forEach(function(k){o[k]=S[k];}); localStorage.setItem(PREF,JSON.stringify(o)); }catch(e){} }
+function loadPrefs(){ try{ var p=JSON.parse(localStorage.getItem(PREF)||'{}'); if(!p.v105) p.timing='follow'; if(!p.v113) p.sound=true; PREF_KEYS.forEach(function(k){ if(k in p) S[k]=p[k]; }); }catch(e){} }
+function savePrefs(){ try{ var o={}; PREF_KEYS.forEach(function(k){o[k]=S[k];}); o.v105=1; o.v113=1; localStorage.setItem(PREF,JSON.stringify(o)); }catch(e){} }
 function say(msg,err){ el.status.textContent=msg; el.status.dataset.kind=err?'error':''; }
 function fmt(s){ s=Math.max(0,s); var m=Math.floor(s/60); return m+':'+(s-m*60).toFixed(2).padStart(5,'0'); }
 
 /* ---------- timing ---------- */
+/* Each point is pinned to the frame it was placed on. A point that sits on the same or an earlier frame than the one
+   before it cannot be pinned, so it is spaced out evenly between its neighbours. */
+function knotFrames(P){
+  var n=P.length, out=new Array(n), last=0, valid=1, bad=[];
+  if(!n) return {F:[],valid:false,bad:bad};
+  out[0]=P[0].f;
+  for(var i=1;i<n;i++){
+    if(P[i].f>out[last]){
+      for(var k=last+1;k<i;k++){ out[k]=out[last]+(P[i].f-out[last])*(k-last)/(i-last); bad.push(k); }
+      out[i]=P[i].f; last=i; valid++;
+    }
+  }
+  for(var k2=last+1;k2<n;k2++){ out[k2]=out[last]+3*(k2-last); bad.push(k2); }
+  return {F:out, valid:valid>=2, bad:bad};
+}
 function followValid(){
   var P=S.points; if(P.length<2) return false;
-  for(var i=1;i<P.length;i++) if(!(P[i].f>P[i-1].f)) return false;
-  return true;
+  return knotFrames(P).valid;
+}
+/* smooth, never-backwards curve through (frame, distance) knots, so the speed does not jump at every point */
+function monoAt(F,K,f){
+  var n=F.length;
+  if(f<=F[0]) return K[0];
+  if(f>=F[n-1]) return K[n-1];
+  var d=[],m=[],i;
+  for(i=0;i<n-1;i++) d.push((K[i+1]-K[i])/(F[i+1]-F[i]));
+  m[0]=d[0]; m[n-1]=d[n-2];
+  for(i=1;i<n-1;i++) m[i]=(d[i-1]*d[i]<=0)?0:(d[i-1]+d[i])/2;
+  for(i=0;i<n-1;i++){
+    if(d[i]===0){ m[i]=0; m[i+1]=0; continue; }
+    var a=m[i]/d[i], b=m[i+1]/d[i], s=a*a+b*b;
+    if(s>9){ var t=3/Math.sqrt(s); m[i]=t*a*d[i]; m[i+1]=t*b*d[i]; }
+  }
+  for(i=0;i<n-1;i++) if(f>=F[i] && f<F[i+1]){
+    var h=F[i+1]-F[i], u=(f-F[i])/h, u2=u*u, u3=u2*u;
+    return (2*u3-3*u2+1)*K[i]+(u3-2*u2+u)*h*m[i]+(-2*u3+3*u2)*K[i+1]+(u3-u2)*h*m[i+1];
+  }
+  return K[n-1];
+}
+/* With an arc, the End is where the ball lands. If its frame is not after your last plotted point, use the Landing mark,
+   or the usual hang time for your carry. */
+function endFrame(F){
+  var n=S.points.length, Fk=F[n-2], e=S.points[n-1].f;
+  if(e>Fk) return e;
+  var c=carryYd(), cand = (S.landing!=null && S.landing>Fk+1) ? S.landing : F[0]+Math.round((c>0?hangTime(c):5)*S.fps);
+  return Math.max(cand,Fk+2);
+}
+/* Follow your plotted points exactly, then carry on along the arc the way a real ball looks from behind. */
+function hybridProgress(f,path){
+  var P=S.points, n=P.length, k=n-2, F=knotFrames(P).F, K=path.knotS, L=path.total, Fk=F[k];
+  if(f<=Fk) return k<1 ? 0 : monoAt(F.slice(0,k+1),K.slice(0,k+1),f);
+  var Fe=endFrame(F), sK=K[k], D=Math.max(1e-6,L-sK), u=clamp((f-Fk)/(Fe-Fk),0,1);
+  var sr=clamp(S.persp,0,3), s=Math.min(1,sr), pm=pmodel(sr), q=clamp((apexFrac(path)*L-sK)/D,0,1);
+  var t0=F[0], span=Math.max(1,Fe-t0), tk=(Fk-t0)/span;
+  var taAll=(S.apexF!=null && S.apexF>Fk && S.apexF<Fe) ? (S.apexF-t0)/span : (1-s)*0.5+s*pm.ta;
+  var ta=(taAll-tk)/(1-tk);
+  if(q<0.04 || ta<0.01 || ta>0.96){ q=0; ta=0; }
+  if(u<ta){
+    var x=u/ta, shape=upShape(x,pm);
+    if(k>=1){
+      var v0=(K[k]-K[k-1])/(F[k]-F[k-1]);                       /* how fast the ball was going when you stopped plotting */
+      var kk=clamp(v0*(Fe-Fk)*ta/(D*q),1,6);
+      shape=1-Math.pow(1-x,kk);
+    }
+    return sK+D*q*((1-s)*x+s*shape);
+  }
+  var v=ta>0 ? (u-ta)/(1-ta) : u;
+  return sK+D*(q+(1-q)*((1-s)*v+s*dnShape(v,pm)));
 }
 function span(){
   var n=S.points.length;
-  if(S.timing==='follow' && followValid()) return {a:S.points[0].f,b:S.points[n-1].f};
+  if(S.timing==='follow' && followValid()){ var kf=knotFrames(S.points).F; return {a:kf[0], b: S.arc ? endFrame(kf) : kf[n-1]}; }
   var a = S.launch!=null ? S.launch : (n ? S.points[0].f : 0);
-  var b = S.landing!=null ? S.landing : a+Math.round(5*S.fps);
+  var b = S.landing!=null ? S.landing : (n>1 && S.points[n-1].f>a ? S.points[n-1].f : a+Math.round(5*S.fps));
   b = Math.max(b,a+1);
   return {a:a,b:Math.min(b,Math.max(a+1,S.frames-1))};
 }
 function progress(f,path){
   if(S.timing==='follow' && followValid()){
-    var F=S.points.map(function(p){return p.f;}), K=path.knotS, n=F.length;
-    if(f<=F[0]) return 0;
-    if(f>=F[n-1]) return path.total;
-    for(var i=0;i<n-1;i++) if(f>=F[i] && f<F[i+1]) return K[i]+(K[i+1]-K[i])*(f-F[i])/(F[i+1]-F[i]);
-    return path.total;
+    if(S.arc) return hybridProgress(f,path);
+    return monoAt(knotFrames(S.points).F, path.knotS, f);
   }
   var sp=span();
   var tau=clamp((f-sp.a)/(sp.b-sp.a),0,1);
-  return (1-Math.pow(1-tau,S.slow))*path.total;
+  var sr=clamp(S.persp,0,3), s=Math.min(1,sr), q=apexFrac(path);
+  if(q<=0.08 || q>=0.92) return tau*path.total;   /* no clear top to the flight: even speed */
+  /* The top of the flight is reached on the frame you marked. If you did not mark one, a camera behind the golfer sees the
+     ball reach the top of the picture early: about a fifth of the way through with full Perspective, half with none. */
+  var pm=pmodel(sr), ta=(1-s)*0.5+s*pm.ta;
+  if(S.apexF!=null && S.apexF>sp.a+1 && S.apexF<sp.b-1) ta=clamp((S.apexF-sp.a)/(sp.b-sp.a),0.08,0.92);
+  if(tau<ta){
+    var u=tau/ta;
+    return q*((1-s)*u+s*upShape(u,pm))*path.total;
+  }
+  var v=(tau-ta)/(1-ta);
+  return (q+(1-q)*((1-s)*v+s*dnShape(v,pm)))*path.total;
 }
 function invalidate(){ pathCache=null; }
+
+/* ---------- arc between Start and End ---------- */
+var ARC_N=20;
+/* The arc carries on from the last point you plotted (the one before the End): it leaves in the direction you were already
+   going, passes through the ARC handle with a level tangent at the top, and comes down onto the End. */
+var lastDirs=null;
+function arcPoints(prev,s,e,A,n){
+  var ar=S.vw/S.vh;
+  function to(p){ return {x:p.x*ar,y:p.y}; }
+  function nrm(v){ var l=Math.hypot(v.x,v.y)||1; return {x:v.x/l,y:v.y/l}; }
+  var S0=to(s), E=to(e), AA=to(A), T0=null;
+  if(prev){ var d=to(prev); d={x:S0.x-d.x,y:S0.y-d.y}; if(Math.hypot(d.x,d.y)>1e-4) T0=nrm(d); }
+  if(!T0) T0=nrm({x:AA.x-S0.x,y:AA.y-S0.y});
+  if(S.arcT0) T0=S.arcT0;
+  var lenA=Math.hypot(AA.x-S0.x,AA.y-S0.y)||1e-4, lenB=Math.hypot(E.x-AA.x,E.y-AA.y)||1e-4;
+  var dx=E.x-S0.x, sx = dx>1e-3 ? 1 : (dx<-1e-3 ? -1 : ((E.x-AA.x)>=0 ? 1 : -1));
+  var dn=nrm({x:0.6*nrm({x:E.x-AA.x,y:E.y-AA.y}).x, y:0.6*nrm({x:E.x-AA.x,y:E.y-AA.y}).y+0.4});
+  if(S.arcDn) dn=S.arcDn;
+  lastDirs={T0:T0,dn:dn,S0:S0,E:E,lenA:lenA,lenB:lenB,ar:ar};
+  var nA=Math.max(3,Math.min(n-3,Math.round(n*lenA/(lenA+lenB)))), nB=n-nA, out=[];
+  function herm(P0,P1,m0,m1,t){
+    var t2=t*t,t3=t2*t, h00=2*t3-3*t2+1, h10=t3-2*t2+t, h01=-2*t3+3*t2, h11=t3-t2;
+    return {x:h00*P0.x+h10*m0.x+h01*P1.x+h11*m1.x, y:h00*P0.y+h10*m0.y+h01*P1.y+h11*m1.y};
+  }
+  /* how rounded the top is follows how far the two sides sit apart sideways, so a narrow shot stays narrow */
+  var dxA=Math.abs(AA.x-S0.x), dxB=Math.abs(E.x-AA.x), base=Math.max(dxA,dxB,0.04*Math.min(lenA,lenB));
+  var mH=Math.min(1.6*base,0.5*Math.min(lenA,lenB));
+  var mA0={x:T0.x*lenA,y:T0.y*lenA}, mA1={x:sx*Math.min(mH,2.5*dxA+0.02*lenA),y:0}, mB0={x:sx*Math.min(mH,2.5*dxB+0.02*lenB),y:0}, mB1={x:dn.x*lenB,y:dn.y*lenB};
+  for(var i=0;i<=nA;i++) out.push(herm(S0,AA,mA0,mA1,i/nA));
+  for(var j=1;j<=nB;j++) out.push(herm(AA,E,mB0,mB1,j/nB));
+  var N=out.length-1;
+  return out.map(function(q,i){ return {x:q.x/ar,y:q.y,f:Math.round(s.f+(e.f-s.f)*i/N)}; }).map(function(q,i,arr){
+    if(i===0) return s; if(i===arr.length-1) return e; return q; });
+}
+/* where the three shape handles sit, in picture coordinates: the top of the arc, the launch direction and the landing direction */
+function arcHandles(){
+  if(!S.arc) return null;
+  var n=S.points.length; if(n<2) return null;
+  arcPoints(n>=3?S.points[n-3]:null,S.points[n-2],S.points[n-1],S.arc,ARC_N);
+  var d=lastDirs; if(!d) return null;
+  var Lh=Math.max(0.06,Math.min(0.32*d.lenA,0.4)), Ld=Math.max(0.06,Math.min(0.32*d.lenB,0.4));
+  return {
+    apex:{x:S.arc.x,y:S.arc.y},
+    t0:{x:(d.S0.x+d.T0.x*Lh)/d.ar, y:d.S0.y+d.T0.y*Lh},
+    dn:{x:(d.E.x-d.dn.x*Ld)/d.ar, y:d.E.y-d.dn.y*Ld}
+  };
+}
+function effPts(){
+  var n=S.points.length;
+  if(!(S.arc && n>=2)) return S.points;
+  return S.points.slice(0,n-2).concat(arcPoints(n>=3?S.points[n-3]:null,S.points[n-2],S.points[n-1],S.arc,ARC_N));
+}
+function defaultApex(){
+  var n=S.points.length, s=S.points[n-2], e=S.points[n-1], ar=S.vw/S.vh;
+  var d=Math.hypot((e.x-s.x)*ar,e.y-s.y), top=Math.min(s.y,e.y);
+  return {x:s.x+(e.x-s.x)*0.45, y:clamp(top-Math.max(0.15,0.4*d),0.03,0.97)};
+}
+
+/* ---------- what a real shot does ---------- */
+/* Hang time by carry (yards). Tour drives hang about 6.1-6.3 s; apex height barely changes from driver to wedge
+   (about 3 yd apart on Tour), so hang time shrinks far more slowly than distance. Mid values are estimates. */
+var HANG=[[30,2.7],[60,3.5],[100,4.4],[125,4.9],[150,5.3],[175,5.6],[200,5.8],[225,6.0],[250,6.1],[280,6.2],[320,6.3]];
+/* Tour-average ball speed (mph) by carry (yards): TrackMan 2024 club table from 142 yd up; shorter shots are estimates. */
+var BALLSPD=[[40,55],[70,72],[100,86],[125,96],[142,104],[152,112],[164,118],[176,123],[188,130],[199,135],[209,140],[218,145],[231,149],[236,156],[249,162],[282,171]];
+function interp(tab,x){
+  if(x<=tab[0][0]){ var k0=tab[1][1]-tab[0][1], d0=tab[1][0]-tab[0][0]; return tab[0][1]+(x-tab[0][0])*k0/d0; }
+  for(var i=1;i<tab.length;i++) if(x<=tab[i][0]) return tab[i-1][1]+(tab[i][1]-tab[i-1][1])*(x-tab[i-1][0])/(tab[i][0]-tab[i-1][0]);
+  var n=tab.length, k=(tab[n-1][1]-tab[n-2][1])/(tab[n-1][0]-tab[n-2][0]);
+  return tab[n-1][1]+(x-tab[n-1][0])*k;
+}
+function carryYd(){ return S.carry>0 ? S.carry*(S.unit==='m'?1.09361:1) : 0; }
+function hangTime(yd){ return Math.max(1.5,interp(HANG,yd)); }
+/* What a camera behind the golfer sees. The ball's height on screen is roughly its height divided by how far away it is,
+   so it shoots up the picture right after impact, then crawls as it gets further away. D0 is the camera's distance behind
+   the ball as a fraction of the carry. */
+/* D0 is how far behind the ball the camera is, as a fraction of the carry. Up to 65% on the Perspective slider it is 0.08;
+   past that the camera moves in close behind the ball (0.012 at 100%, 0.001 at 300%), so the ball leaves the bottom of the
+   picture much faster. The even/real blend is full from 100%. */
+function pmodel(s){
+  var D0 = s<=0.65 ? 0.08 : (s<=1 ? 0.08*Math.pow(0.012/0.08,(s-0.65)/0.35) : 0.012*Math.pow(0.001/0.012,(Math.min(s,3)-1)/2));
+  var ta=-D0+Math.sqrt(D0*D0+D0);                           /* time of the highest point on screen, as a fraction of the flight */
+  return {D0:D0, ta:ta, ya:ta*(1-ta)/(ta+D0)};
+}
+function persY(t,D0){ return t*(1-t)/(t+D0); }
+function upShape(u,m){ return persY(u*m.ta,m.D0)/m.ya; }                 /* 0 to 1 over the climb */
+function dnShape(v,m){ return 1-persY(m.ta+v*(1-m.ta),m.D0)/m.ya; }     /* 0 to 1 over the descent */
+function apexFrac(path){
+  var s=path.s, best=0;
+  for(var i=1;i<s.length;i++) if(s[i].y<s[best].y) best=i;
+  return path.cum[best]/path.total;
+}
 function getPath(){
   if(S.points.length<2) return null;
-  if(!pathCache) pathCache=buildPath(S.points,S.curve,S.vw/S.vh);
+  if(!pathCache) pathCache=buildPath(effPts(),S.arc?'exact':S.curve,S.vw/S.vh);
   return pathCache;
 }
 
@@ -702,12 +974,58 @@ function drawHandles(ctx,W,H,px,V){
   var r=10*px;
   S.points.forEach(function(p,i){
     var q=mapPt(p,W,H,V), x=q.x, y=q.y, on=(i===S.sel);
+    var nn=S.points.length, role = i===0 ? 'Start' : (i===nn-1 ? 'End' : '');
     ctx.beginPath(); ctx.arc(x,y,on?r*1.2:r,0,Math.PI*2);
     ctx.fillStyle= on ? '#f2c14e' : 'rgba(255,255,255,0.88)'; ctx.fill();
     ctx.lineWidth=2*px; ctx.strokeStyle='rgba(0,0,0,0.65)'; ctx.stroke();
+    if(role){
+      var col = role==='Start' ? '#4ade80' : '#ff6b5e';
+      ctx.beginPath(); ctx.arc(x,y,(on?r*1.2:r)+3*px,0,Math.PI*2); ctx.lineWidth=3*px; ctx.strokeStyle=col; ctx.stroke();
+      var fs=10*px; ctx.font='700 '+fs+'px "IBM Plex Mono",monospace';
+      var tw=ctx.measureText(role.toUpperCase()).width+10*px, th=fs+7*px;
+      var ty = y-r-th*0.5-6*px; if(ty-th/2<2*px) ty=y+r+th*0.5+6*px;
+      ctx.fillStyle=col; ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(x-tw/2,ty-th/2,tw,th,th/2); else ctx.rect(x-tw/2,ty-th/2,tw,th);
+      ctx.fill();
+      ctx.fillStyle='#0b100d'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(role.toUpperCase(),x,ty+px*0.5);
+    }
     ctx.fillStyle='#14110a'; ctx.font='600 '+(11*px)+'px "IBM Plex Mono",monospace';
     ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(String(i+1),x,y+px*0.5);
   });
+  if(S.arc){
+    var aq=mapPt(S.arc,W,H,V), ar2=r*1.15, ac='#4cc3ff', am=ar2*2.4, offX=0, offY=0;
+    {
+      if(aq.x<am){ offX=-1; aq.x=am; } else if(aq.x>W-am){ offX=1; aq.x=W-am; }
+      if(aq.y<am){ offY=-1; aq.y=am; } else if(aq.y>H-am){ offY=1; aq.y=H-am; }
+      if(offX||offY){
+        ctx.save(); ctx.fillStyle=ac; ctx.translate(aq.x,aq.y);
+        var ax=offX*(ar2*1.5+3*px), ay=offY*(ar2*1.5+3*px), ang=Math.atan2(offY,offX), tr=ar2*0.6;
+        ctx.translate(ax,ay); ctx.rotate(ang); ctx.beginPath(); ctx.moveTo(tr,0); ctx.lineTo(-tr*0.6,tr*0.8); ctx.lineTo(-tr*0.6,-tr*0.8); ctx.closePath(); ctx.fill(); ctx.restore();
+      }
+    }
+    ctx.save(); ctx.translate(aq.x,aq.y); ctx.rotate(Math.PI/4);
+    ctx.fillStyle=ac; ctx.fillRect(-ar2*0.8,-ar2*0.8,ar2*1.6,ar2*1.6);
+    ctx.lineWidth=2*px; ctx.strokeStyle='rgba(0,0,0,0.65)'; ctx.strokeRect(-ar2*0.8,-ar2*0.8,ar2*1.6,ar2*1.6); ctx.restore();
+    var fs2=10*px; ctx.font='700 '+fs2+'px "IBM Plex Mono",monospace';
+    var tw2=ctx.measureText('ARC').width+10*px, th2=fs2+7*px, ty2=aq.y-ar2-th2*0.5-6*px; if(ty2-th2/2<2*px) ty2=aq.y+ar2+th2*0.5+6*px;
+    ctx.fillStyle=ac; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(aq.x-tw2/2,ty2-th2/2,tw2,th2,th2/2); else ctx.rect(aq.x-tw2/2,ty2-th2/2,tw2,th2); ctx.fill();
+    ctx.fillStyle='#0b100d'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('ARC',aq.x,ty2+px*0.5);
+    var hs=arcHandles(), np=S.points.length;
+    if(hs && np>=2){
+      [['t0','LAUNCH',S.points[np-2]],['dn','LAND',S.points[np-1]]].forEach(function(it){
+        var hp=mapPt(hs[it[0]],W,H,V), an=mapPt(it[2],W,H,V);
+        ctx.save(); ctx.setLineDash([5*px,4*px]); ctx.lineWidth=2*px; ctx.strokeStyle='rgba(76,195,255,.9)';
+        ctx.beginPath(); ctx.moveTo(an.x,an.y); ctx.lineTo(hp.x,hp.y); ctx.stroke(); ctx.restore();
+        ctx.beginPath(); ctx.arc(hp.x,hp.y,r*0.95,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+        ctx.lineWidth=3*px; ctx.strokeStyle=ac; ctx.stroke();
+        var fs3=9*px; ctx.font='700 '+fs3+'px "IBM Plex Mono",monospace';
+        var tw3=ctx.measureText(it[1]).width+10*px, th3=fs3+7*px, ty3=hp.y+r+th3*0.5+4*px;
+        if(ty3+th3/2>H-2*px) ty3=hp.y-r-th3*0.5-4*px;
+        ctx.fillStyle=ac; ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(hp.x-tw3/2,ty3-th3/2,tw3,th3,th3/2); else ctx.rect(hp.x-tw3/2,ty3-th3/2,tw3,th3); ctx.fill();
+        ctx.fillStyle='#0b100d'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(it[1],hp.x,ty3+px*0.5);
+      });
+    }
+  }
   if(S.pending){
     var q2=mapPt(S.pending,W,H,V); ctx.save(); ctx.setLineDash([4*px,4*px]); ctx.lineWidth=2*px; ctx.strokeStyle='#f2c14e';
     ctx.beginPath(); ctx.arc(q2.x,q2.y,r*1.3,0,Math.PI*2); ctx.stroke(); ctx.restore();
@@ -738,8 +1056,8 @@ function drawOverlay(){
   octx.clearRect(0,0,W,H);
   var guides=!S.playing && !S.exporting;
   drawTracer(octx,W,H,curF(),guides,px,V);
-  var q=S.drag ? S.points[S.drag.i] : S.pending;
-  if(q && guides) drawLoupe(q,px,V);
+  var ah=(S.drag && S.drag.arc) ? arcHandles() : null, q=S.drag ? (S.drag.arc ? (ah ? ah[S.drag.kind||'apex'] : S.arc) : S.points[S.drag.i]) : S.pending;
+  if(q && guides && !(S.drag && S.drag.arc && (q.x<0||q.x>1||q.y<0||q.y>1))) drawLoupe(q,px,V);
 }
 
 /* sample scene shown before a video is loaded */
@@ -800,7 +1118,7 @@ function setFrame(k){
 function readout(){
   if(!S.hasVideo){ el.readout.textContent='No video loaded'; return; }
   var k=clamp(Math.round(curF()),0,S.frames-1);
-  el.readout.textContent='Frame '+k+' of '+(S.frames-1)+' · '+fmt(el.video.currentTime)+' · '+S.fps+' fps';
+  el.readout.textContent= compact() ? (k+' / '+(S.frames-1)) : 'Frame '+k+' of '+(S.frames-1)+' · '+fmt(el.video.currentTime)+' · '+S.fps+' fps';
 }
 function syncScrub(){ if(!S.hasVideo) return; el.scrub.value=clamp(Math.round(curF()),0,S.frames-1); readout(); }
 function sched(cb){
@@ -827,6 +1145,12 @@ function onStop(){ S.playing=false; loopTok++; setPlayIcon(); syncScrub(); drawO
 el.video.addEventListener('pause',function(){ if(!S.exporting) onStop(); });
 el.video.addEventListener('ended',function(){ if(!S.exporting) onStop(); });
 el.video.addEventListener('seeked',function(){ syncScrub(); drawOverlay(); updateUI(); });
+function setHear(on){
+  S.hear=!!on; el.video.muted=!S.hear;
+  var b=$('hear'); b.setAttribute('aria-pressed',S.hear?'true':'false'); b.setAttribute('aria-label',S.hear?'Sound on':'Sound off');
+  b.style.opacity=S.hear?'1':'0.55'; $('hearWave').style.display=S.hear?'':'none'; savePrefs();
+}
+$('hear').onclick=function(){ setHear(!S.hear); };
 function togglePlay(){
   if(!S.hasVideo||S.exporting) return;
   if(el.video.paused){ S.previewEnd=null; el.video.playbackRate=S.speed; el.video.play().catch(function(){}); }
@@ -856,29 +1180,54 @@ function seekTo(t){
 }
 
 /* ---------- points ---------- */
-function snap(){ hist.push(JSON.stringify({p:S.points,sel:S.sel})); if(hist.length>60) hist.shift(); }
+function snap(){ hist.push(JSON.stringify({p:S.points,sel:S.sel,a:S.arc,t0:S.arcT0,dn:S.arcDn})); if(hist.length>60) hist.shift(); }
 function undo(){
   if(!hist.length) return;
-  var h=JSON.parse(hist.pop()); S.points=h.p; S.sel=h.sel; invalidate(); drawOverlay(); updateUI();
+  var h=JSON.parse(hist.pop()); S.points=h.p; S.sel=h.sel; S.arc=h.a||null; S.arcT0=h.t0||null; S.arcDn=h.dn||null; invalidate(); drawOverlay(); updateUI();
 }
 function addPoint(p){
+  if(S.arc){
+    snap(); var fa=Math.round(curF()), ia=S.points.length-1;
+    S.points.splice(ia,0,{x:p.x,y:p.y,f:fa}); S.sel=ia;
+    invalidate(); updateUI(); drawOverlay(); say('Point added before the End. Keep stepping forward and tapping the ball while you can still see it.'); return;
+  }
   snap();
   var f=Math.round(curF());
-  S.points.push({x:p.x,y:p.y,f:f});
-  S.sel=S.points.length-1;
+  var at=(S.insert==='after' && S.sel>=0 && S.sel<S.points.length) ? S.sel+1 : S.points.length;
+  S.points.splice(at,0,{x:p.x,y:p.y,f:f});
+  S.sel=at;
   if(S.launch==null && S.points.length===1) S.launch=f;
   invalidate(); updateUI(); drawOverlay();
-  if(S.points.length===1) say('Now add points along the flight. Step ahead to follow the ball, or just trace where it went.');
-  else if(S.points.length===2) say('Two points make a straight line. Add a point near the top of the flight to bend it.');
+  if(at<S.points.length-1) say('Added as point '+(at+1)+', between '+at+' and '+(at+2)+'. Tap again to add the next one after it.');
+  else if(S.points.length===1) say('Now step forward a few frames and tap the ball again. Each point is pinned to the frame it was placed on, so the tracer reaches it on that frame.');
+  else if(S.points.length===2) say('Keep stepping forward and tapping the ball. Two points make a straight line, and more points follow the flight.');
   else say('Press Preview shot to watch it, or drag points to refine the line.');
 }
+function moveSel(d){
+  var i=S.sel, j=i+d;
+  if(S.arc || i<0 || j<0 || j>=S.points.length || S.exporting) return;
+  snap(); var t=S.points[i]; S.points[i]=S.points[j]; S.points[j]=t; S.sel=j;
+  invalidate(); updateUI(); drawOverlay();
+  say('Point moved to position '+(j+1)+(j===0?' (now the Start).':j===S.points.length-1?' (now the End).':'.'));
+}
+function toggleArc(){
+  if(S.exporting) return;
+  var n=S.points.length;
+  if(S.arc){
+    snap(); S.points=S.points.slice(0,n-2).concat(arcPoints(n>=3?S.points[n-3]:null,S.points[n-2],S.points[n-1],S.arc,8)); S.arc=null; S.arcT0=null; S.arcDn=null; S.sel=-1;
+    invalidate(); updateUI(); drawOverlay(); say('Arc turned into points. Drag any of them to fine-tune, or use Arc to start again.'); return;
+  }
+  if(n<2) return;
+  snap(); S.arc=defaultApex(); S.arcT0=null; S.arcDn=null; S.sel=-1;
+  invalidate(); updateUI(); drawOverlay(); say('Arc drawn. Drag the blue ARC handle to the top of the flight, the LAUNCH handle to change how it leaves, and the LAND handle to change how it comes down.');
+}
 function deleteSel(){
-  if(S.sel<0) return;
+  if(S.sel<0 || (S.arc && (S.points.length<=2 || S.sel===S.points.length-1))) return;
   snap(); S.points.splice(S.sel,1); S.sel=-1; invalidate(); updateUI(); drawOverlay();
 }
 function clearAll(){
   if(!S.points.length) return;
-  snap(); S.points=[]; S.sel=-1; S.launch=null; S.landing=null; invalidate(); updateUI(); drawOverlay();
+  snap(); S.points=[]; S.arc=null; S.arcT0=null; S.arcDn=null; S.sel=-1; S.launch=null; S.landing=null; S.apexF=null; invalidate(); updateUI(); drawOverlay();
   say('Cleared. Press on the ball to start a new line.');
 }
 function toNorm(e){
@@ -887,6 +1236,21 @@ function toNorm(e){
     x:clamp(v.cx+((e.clientX-r.left)/r.width-0.5)/v.z,0,1),
     y:clamp(v.cy+((e.clientY-r.top)/r.height-0.5)/v.z,0,1)
   };
+}
+function toNormFree(e){
+  var r=el.overlay.getBoundingClientRect(), v=S.view;
+  return { x:v.cx+((e.clientX-r.left)/r.width-0.5)/v.z, y:v.cy+((e.clientY-r.top)/r.height-0.5)/v.z };
+}
+function hitArc(e){
+  var hs=arcHandles(); if(!hs) return null;
+  var r=el.overlay.getBoundingClientRect(), v=S.view, best=null, bd=32;
+  ['apex','t0','dn'].forEach(function(k){
+    var q=hs[k], sx=((q.x-v.cx)*v.z+0.5)*r.width, sy=((q.y-v.cy)*v.z+0.5)*r.height;
+    if(k==='apex'){ var mg=28; sx=clamp(sx,mg,r.width-mg); sy=clamp(sy,mg,r.height-mg); }
+    var dd=Math.hypot(sx-(e.clientX-r.left), sy-(e.clientY-r.top));
+    if(dd<bd){ bd=dd; best=k; }
+  });
+  return best;
 }
 function hit(e){
   var r=el.overlay.getBoundingClientRect(), v=S.view, best=-1, bd=26;
@@ -953,8 +1317,9 @@ el.overlay.addEventListener('pointerdown',function(e){
   if(wantPan){ S.panning={x:e.clientX,y:e.clientY,cx:S.view.cx,cy:S.view.cy}; return; }
   if(S.playing) return;
   if(e.pointerType==='mouse' && e.button!==0) return;
-  var h=hit(e);
+  var h=hit(e), hk=null;
   if(h>=0){ snap(); S.sel=h; S.drag={i:h}; S.pending=null; updateUI(); }
+  else if(S.arc && (hk=hitArc(e))){ snap(); var fp=toNormFree(e), hh=arcHandles()[hk]; S.drag={arc:true,kind:hk,dx:hh.x-fp.x,dy:hh.y-fp.y}; S.pending=null; updateUI(); }
   else { S.pending=toNorm(e); S.drag=null; }
   drawOverlay();
 });
@@ -967,7 +1332,18 @@ el.overlay.addEventListener('pointermove',function(e){
     v.cy=S.panning.cy-(e.clientY-S.panning.y)/(r.height*v.z);
     applyView(); return;
   }
-  if(S.drag){ var p=toNorm(e), t=S.points[S.drag.i]; t.x=p.x; t.y=p.y; invalidate(); drawOverlay(); }
+  if(S.drag){
+    if(S.drag.arc){
+      var fq=toNormFree(e), gx=fq.x+S.drag.dx, gy=fq.y+S.drag.dy, kd=S.drag.kind||'apex';
+      if(kd==='apex') S.arc={x:clamp(gx,-0.6,1.6),y:clamp(gy,-3,1.2)};
+      else if(lastDirs){
+        var ld=lastDirs, px2=gx*ld.ar, vx, vy, l;
+        if(kd==='t0'){ vx=px2-ld.S0.x; vy=gy-ld.S0.y; l=Math.hypot(vx,vy); if(l>0.015) S.arcT0={x:vx/l,y:vy/l}; }
+        else { vx=ld.E.x-px2; vy=gy-ld.E.y; vy=-vy; l=Math.hypot(vx,vy); if(l>0.015){ vx/=l; vy/=l; if(vy<0.12){ vy=0.12; var l2=Math.hypot(vx,vy); vx/=l2; vy/=l2; } S.arcDn={x:vx,y:vy}; } }
+      }
+    }
+    else { var p=toNorm(e), t=S.points[S.drag.i]; t.x=p.x; t.y=p.y; }
+    invalidate(); drawOverlay(); }
   else if(S.pending){ S.pending=toNorm(e); drawOverlay(); }
 });
 function endPointer(e,commit){
@@ -1003,24 +1379,41 @@ function placeMark(id,frame){
 }
 function updateUI(){
   var has=S.hasVideo, n=S.points.length, busy=S.exporting;
-  ['b-10','b-1','play','f1','f10','preview'].forEach(function(id){ $(id).disabled=!has||busy||(id==='preview'&&n<2); });
+  ['b-10','b-1','play','f1','f10','preview','hear'].forEach(function(id){ $(id).disabled=!has||busy||(id==='preview'&&n<2); });
   el.scrub.disabled=!has||busy;
-  $('undo').disabled=!hist.length||busy; $('del').disabled=S.sel<0||busy; $('clear').disabled=!n||busy;
+  $('undo').disabled=!hist.length||busy; $('del').disabled=S.sel<0||busy||(!!S.arc && (n<=2 || S.sel===n-1)); $('clear').disabled=!n||busy;
   $('setLaunch').disabled=!has||busy; $('setLanding').disabled=!has||busy;
   $('pin').disabled=!has||S.sel<0||busy;
-  $('export').disabled=!has||n<2||busy; $('still').disabled=!has||n<2||busy;
+  $('mvUp').disabled=busy||!!S.arc||S.sel<=0; $('mvDn').disabled=busy||!!S.arc||S.sel<0||S.sel>=n-1;
+  $('arcBtn').disabled=busy||n<2; $('arcBtn').textContent=S.arc?'Turn arc into points':'Arc from my last point to the End';
+  $('pathHint').textContent=S.arc?'Arc is on. The tracer follows the points you plotted, then carries on along the arc by itself and lands on the End. Drag the blue ARC handle to the top of the flight, the LAUNCH handle to change how the ball leaves, and the LAND handle to change how it comes down. If the ball leaves the picture, drag the ARC handle off the top or sides, where it waits at the edge with an arrow. Tap the video to add more points while you can still see the ball. Press the button again to turn the arc into points.':'The first point is the Start and the last is the End. Plot the ball on the first few frames where you can see it, then put the End where it lands and press Arc, and the tracer works out the rest. Choose \u201cAfter selected\u201d to put a new point between two others, and use the Move buttons to reorder.';
+  $('export').disabled=!has||n<2||busy; $('still').disabled=!has||n<2||busy||!dl;
+  $('still').hidden=!dl;
   $('cancel').hidden=!busy; $('prog').hidden=!busy;
   $('tailRow').style.display = S.style==='snake' ? 'grid' : 'none';
-  var sp=span();
+  var sp=span(); hangInfo(sp);
   $('launchVal').textContent = n ? fmt(sp.a/S.fps)+' · frame '+sp.a : '—';
   $('landingVal').textContent = n ? fmt(sp.b/S.fps)+' · frame '+sp.b : '—';
   placeMark('mkA',sp.a); placeMark('mkB',sp.b);
-  $('autoBox').style.display = S.timing==='auto' ? 'grid' : 'none';
-  $('followBox').style.display = S.timing==='follow' ? 'grid' : 'none';
-  var fv=followValid();
-  $('followNote').textContent = (S.timing==='follow' && n>=2 && !fv)
-    ? 'A point sits on an earlier frame than the one before it, so the tracer is using Auto timing for now. Select the point and pin it to a later frame.'
-    : 'Each point is pinned to the frame it was placed on, and the tracer reaches it on that frame. Select a point, step to the frame where the ball is really there, and press Pin.';
+  var topOk=S.apexF!=null && S.apexF>sp.a+1 && S.apexF<sp.b-1;
+  placeMark('mkT',S.apexF!=null?S.apexF:0); if(!topOk) $('mkT').hidden=true;
+  $('topVal').textContent=S.apexF==null?'optional':(topOk?fmt(S.apexF/S.fps)+' · frame '+S.apexF:'frame '+S.apexF+' is outside Launch to Landing');
+  $('clrTop').hidden=S.apexF==null; $('setTop').disabled=!has||busy;
+  var showAuto = S.timing==='auto';
+  $('autoBox').style.display = showAuto ? 'grid' : 'none';
+  $('followBox').style.display = showAuto ? 'none' : 'grid';
+  $('shapeBox').style.display = (showAuto || S.arc) ? 'grid' : 'none';
+  var kf=knotFrames(S.points), fv=followValid();
+  var arcOn = !!S.arc && n>=2 && fv;
+  $('followNote').textContent = arcOn
+    ? (kf.bad.indexOf(n-1)>=0
+      ? 'The End sits on the same or an earlier frame than your last point, so the tracer lands it using the usual hang time for your carry. Step to the frame where the ball lands, select the End and press Pin.'
+      : 'The tracer follows your points exactly up to the last one before the End, then carries on along the arc by itself and reaches the End on its frame. Plot as many points as you can see the ball for.')
+    : (n>=2 && !fv)
+    ? 'These points are all on the same frame, so there is no timing to follow yet and the tracer is using Auto for now. Step forward a few frames between points, so each one is placed on the frame where the ball really is.'
+    : (kf.bad.length
+      ? 'The red points sit on the same or an earlier frame than the point before, so the tracer spaces them out between their neighbours. Select one, step to the frame where the ball really is there, and press Pin.'
+      : 'The tracer reaches each point on the frame you placed it, so the line stays on the real ball. Step through the video and tap the ball every few frames. To correct one, select it, step to the right frame and press Pin.');
   var box=$('chips');
   if(!n){ box.innerHTML='<span class="nopts">No points yet</span>'; }
   else {
@@ -1028,17 +1421,48 @@ function updateUI(){
     S.points.forEach(function(p,i){
       var b=document.createElement('button'); b.className='pt'; b.dataset.i=i;
       b.setAttribute('aria-pressed',i===S.sel?'true':'false');
-      if(S.timing==='follow' && i>0 && !(p.f>S.points[i-1].f)) b.classList.add('bad');
-      b.innerHTML=(i+1)+'<small>F'+p.f+'</small>';
+      if(kf.bad.indexOf(i)>=0) b.classList.add('bad');
+      b.innerHTML=(i+1)+'<small>'+(i===0?'Start ':(i===n-1?'End ':''))+'F'+p.f+'</small>';
+      b.title=(i===0?'Start':(i===n-1?'End':'Point '+(i+1)))+', frame '+p.f;
       box.appendChild(b);
     });
   }
-  $('export').textContent = busy ? 'Recording…' : 'Export video';
+  var ovl=S.outKind==='overlay';
+  $('export').textContent = busy ? 'Recording…' : (ovl ? 'Export tracer' : 'Export video');
+  $('soundRow').hidden=ovl; $('overlayHint').hidden=!ovl; $('still').hidden=ovl;
 }
 $('chips').addEventListener('click',function(e){
   var b=e.target.closest('.pt'); if(!b||S.exporting) return;
   S.sel=+b.dataset.i; setFrame(S.points[S.sel].f); updateUI(); drawOverlay();
 });
+function hangInfo(sp){
+  var yd=carryYd(), note=$('hangNote'), btn=$('hangSet');
+  var auto = S.timing==='auto';
+  btn.hidden=true;
+  if(!S.hasVideo || !(yd>0) || (!auto && !followValid())){ note.hidden=true; return; }
+  var T=hangTime(yd), mph=Math.round(interp(BALLSPD,yd)), mine=(sp.b-sp.a)/S.fps;
+  var txt='A '+Math.round(yd)+' yd carry usually leaves the club at about '+mph+' mph (Tour average) and hangs for about '+T.toFixed(1)+' s.';
+  var far=Math.abs(mine-T)/T>0.3;
+  if(auto){
+    var set = S.landing!=null && S.launch!=null;
+    if(set){
+      txt+=' Your Launch to Landing is '+mine.toFixed(1)+' s.';
+      if(far) txt+=' That is quite different, so check the Landing frame, or the fps setting.';
+    } else txt+=' Set Launch and Landing from the video, or use the button below.';
+    btn.hidden=false;
+  } else {
+    txt+=' Your first to last point is '+mine.toFixed(1)+' s.';
+    if(far) txt+=mine<T ? ' That is short for this distance. If you have traced the whole flight, check the last point\u2019s frame and the fps setting.' : ' That is long for this distance, so check the last point\u2019s frame and the fps setting.';
+    else txt+=' That looks right.';
+  }
+  note.textContent=txt; note.hidden=false; note.style.color = far ? 'var(--danger)' : '';
+}
+$('hangSet').onclick=function(){
+  var yd=carryYd(); if(!S.hasVideo||!(yd>0)) return;
+  var a = S.launch!=null ? S.launch : (S.points.length ? S.points[0].f : Math.round(curF()));
+  S.launch=a; S.landing=Math.min(S.frames-1,a+Math.round(hangTime(yd)*S.fps));
+  updateUI(); redraw(); say('Landing set '+hangTime(yd).toFixed(1)+' s after launch.');
+};
 function syncSegs(){
   document.querySelectorAll('.seg').forEach(function(seg){
     seg.querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-pressed',b.dataset.v===String(S[seg.dataset.key])?'true':'false'); });
@@ -1049,6 +1473,11 @@ document.querySelectorAll('.seg').forEach(function(seg){
     var b=e.target.closest('button'); if(!b) return;
     S[seg.dataset.key]=b.dataset.v; invalidate(); syncSegs(); savePrefs(); updateUI(); redraw();
   });
+});
+document.querySelector('.seg[data-key="outKind"]').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b) return;
+  if(S.outKind==='overlay'){ S.clip='whole'; $('clip').value='whole'; savePrefs(); }
+  updateUI();
 });
 function buildSwatches(){
   var box=$('swatches'); box.innerHTML='';
@@ -1090,7 +1519,12 @@ $('preview').onclick=previewShot;
 el.scrub.addEventListener('input',function(){ if(S.playing) el.video.pause(); setFrame(+el.scrub.value); });
 $('undo').onclick=undo; $('del').onclick=deleteSel; $('clear').onclick=clearAll;
 $('setLaunch').onclick=function(){ S.launch=Math.round(curF()); if(S.landing!=null && S.landing<=S.launch) S.landing=null; updateUI(); drawOverlay(); };
+$('setTop').onclick=function(){ S.apexF=Math.round(curF()); updateUI(); drawOverlay(); say('Top of the flight set. The tracer now reaches the highest point of your line on this frame.'); };
+$('clrTop').onclick=function(){ S.apexF=null; updateUI(); drawOverlay(); };
 $('setLanding').onclick=function(){ S.landing=Math.round(curF()); updateUI(); drawOverlay(); };
+$('arcBtn').onclick=toggleArc;
+$('mvUp').onclick=function(){ moveSel(-1); };
+$('mvDn').onclick=function(){ moveSel(1); };
 $('pin').onclick=function(){ if(S.sel<0) return; snap(); S.points[S.sel].f=Math.round(curF()); invalidate(); updateUI(); drawOverlay(); };
 
 document.addEventListener('keydown',function(e){
@@ -1108,16 +1542,17 @@ document.addEventListener('keydown',function(e){
 });
 
 /* ---------- loading a video ---------- */
+var srcFile=null;
 function loadFile(file){
   if(!file) return;
   if(!/^video\//.test(file.type) && !/\.(mov|mp4|m4v|webm)$/i.test(file.name)){ say('That file is not a video. Choose an MP4 or MOV clip.',true); return; }
   if(objectUrl) URL.revokeObjectURL(objectUrl);
-  objectUrl=URL.createObjectURL(file);
-  S.hasVideo=false; S.points=[]; S.sel=-1; S.launch=null; S.landing=null; hist=[]; invalidate();
+  objectUrl=URL.createObjectURL(file); srcFile=file;
+  S.hasVideo=false; S.points=[]; S.arc=null; S.arcT0=null; S.arcDn=null; S.sel=-1; S.launch=null; S.landing=null; S.apexF=null; hist=[]; invalidate();
   S.view={z:1,cx:0.5,cy:0.5}; S.panMode=false; el.frame.classList.remove('panmode'); $('zPan').setAttribute('aria-pressed','false'); applyView(true);
   el.frame.classList.remove('live');
   say('Loading '+file.name+'…');
-  el.video.muted=true; el.video.src=objectUrl; el.video.load();
+  el.video.muted=!S.hear; el.video.src=objectUrl; el.video.load();
 }
 el.video.addEventListener('loadedmetadata',function(){
   S.vw=el.video.videoWidth||1920; S.vh=el.video.videoHeight||1080;
@@ -1125,7 +1560,7 @@ el.video.addEventListener('loadedmetadata',function(){
   S.hasVideo=true; setFps(60);
   el.frame.classList.add('live');
   requestAnimationFrame(function(){ layoutStage(); resize(); setFrame(0); updateUI(); });
-  if(compact() && !MQL.matches && document.body.dataset.tab==='carry') setTab('');
+  if(compact()) setTab('trace');
   say('Press on the ball at address to place the first point. Pinch to zoom in if it is hard to see.');
   detectFps().then(function(f){ if(f){ setFps(f); $('status').dataset.kind=''; } });
 });
@@ -1144,9 +1579,10 @@ function detectFps(){
   return new Promise(function(res){
     if(!el.video.requestVideoFrameCallback){ res(null); return; }
     var times=[], done=false;
+    el.video.muted=true;
     function fin(){
       if(done) return; done=true;
-      try{ el.video.pause(); el.video.currentTime=0; }catch(e){}
+      try{ el.video.pause(); el.video.currentTime=0; el.video.muted=!S.hear; }catch(e){}
       var d=[]; for(var i=1;i<times.length;i++) d.push(times[i]-times[i-1]);
       d.sort(function(a,b){return a-b;});
       var m=d.length?d[Math.floor(d.length/2)]:0;
@@ -1161,7 +1597,43 @@ function detectFps(){
     setTimeout(fin,1800);
   });
 }
-$('file').addEventListener('change',function(){ loadFile(this.files&&this.files[0]); this.value=''; });
+/* On a phone, show the chosen video first so it can be checked before it is brought into the tracer. */
+var pvFile=null, pvUrl=null;
+function pvClose(){
+  var v=$('pvVideo'); try{ v.pause(); }catch(e){}
+  v.removeAttribute('src'); try{ v.load(); }catch(e){}
+  if(pvUrl){ URL.revokeObjectURL(pvUrl); pvUrl=null; }
+  $('pv').hidden=true; pvFile=null;
+}
+function pvOpen(file){
+  if(!/^video\//.test(file.type) && !/\.(mov|mp4|m4v|webm)$/i.test(file.name)){ say('That file is not a video. Choose an MP4 or MOV clip.',true); return; }
+  pvFile=file; if(pvUrl) URL.revokeObjectURL(pvUrl);
+  pvUrl=URL.createObjectURL(file);
+  var v=$('pvVideo'), info=$('pvInfo'), mb=(file.size/1048576).toFixed(file.size>1e8?0:1)+' MB';
+  info.className='info'; info.textContent=file.name+' · '+mb+' · loading preview…';
+  $('pvUse').disabled=false;
+  v.muted=false; v.onloadedmetadata=function(){
+    var d=v.duration||0;
+    info.textContent=file.name+' · '+v.videoWidth+'×'+v.videoHeight+' · '+d.toFixed(1)+' s · '+mb;
+  };
+  v.onerror=function(){
+    info.className='info err';
+    info.textContent='This browser cannot play that file ('+file.name+'). Try an MP4 or MOV from the Camera app, or another browser.';
+    $('pvUse').disabled=true;
+  };
+  v.src=pvUrl; v.load();
+  $('pv').hidden=false; $('pvUse').focus();
+}
+$('pvUse').onclick=function(){ var f=pvFile; pvClose(); if(f) loadFile(f); };
+$('pvOther').onclick=function(){ pvClose(); $('file').click(); };
+$('pvCancel').onclick=pvClose;
+document.addEventListener('keydown',function(e){ if(e.key==='Escape' && !$('pv').hidden) pvClose(); });
+function wantsPreview(){ return window.matchMedia('(pointer:coarse)').matches || compact(); }
+$('file').addEventListener('change',function(){
+  var f=this.files&&this.files[0]; this.value='';
+  if(!f) return;
+  if(wantsPreview()) pvOpen(f); else loadFile(f);
+});
 ['dragenter','dragover'].forEach(function(n){ el.frame.addEventListener(n,function(e){ e.preventDefault(); el.frame.classList.add('drop'); }); });
 ['dragleave','drop'].forEach(function(n){ el.frame.addEventListener(n,function(e){ e.preventDefault(); el.frame.classList.remove('drop'); }); });
 el.frame.addEventListener('drop',function(e){ var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0]; loadFile(f); });
@@ -1184,14 +1656,316 @@ function showResult(blob,name,info){
   resultUrl=URL.createObjectURL(blob); resultBlob=blob; resultName=name;
   $('resultVideo').src=resultUrl; $('resultInfo').textContent=info;
   $('result').hidden=false;
-  $('saveVideo').hidden=false; $('noSave').hidden=true;
+  $('saveVideo').hidden=!dl; $('noSave').hidden=!!dl;
   $('result').scrollIntoView({block:'nearest',behavior:reduced?'auto':'smooth'});
 }
 function stamp(){ var d=new Date(),p=function(n){return String(n).padStart(2,'0');}; return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'-'+p(d.getHours())+p(d.getMinutes()); }
+/* Frame-by-frame export. Each frame is drawn when it is ready and given its exact place in time, so the finished video is
+   smooth however slowly the page draws, even at 4K. Needs WebCodecs; otherwise the real-time recorder below is used. */
+/* Moves to a frame and waits until that exact frame is on screen. Resolves to true when the browser confirmed it,
+   false if it had to give up waiting, and the shown frame's time is left in lastMedia. */
+var lastMedia=null;
+function seekFrame(t,want){
+  return new Promise(function(res){
+    var v=el.video; t=clamp(t,0,v.duration||0);
+    var hasR=!!v.requestVideoFrameCallback, tol=0.55/S.fps, fin=false, to1=0, to2=0, seeked=false;
+    if(Math.abs(v.currentTime-t)<0.0001){ res(true); return; }
+    var done=function(ok){ if(fin) return; fin=true; v.removeEventListener('seeked',onS); clearTimeout(to1); clearTimeout(to2); res(ok); };
+    var onS=function(){
+      seeked=true;
+      if(!hasR){ requestAnimationFrame(function(){ done(true); }); return; }
+      clearTimeout(to2); to2=setTimeout(function(){ done(false); },250);
+    };
+    var onR=function(now,meta){
+      if(fin) return;
+      if(meta && typeof meta.mediaTime==='number'){
+        lastMedia=meta.mediaTime;
+        if(Math.abs(meta.mediaTime-want)<=tol){ done(true); return; }
+      }
+      v.requestVideoFrameCallback(onR);
+    };
+    to1=setTimeout(function(){ done(false); },3000);
+    v.addEventListener('seeked',onS);
+    if(hasR) v.requestVideoFrameCallback(onR);
+    v.currentTime=t;
+  });
+}
+/* Copies the original AAC sound packets for a stretch of the clip straight out of an MP4 or MOV file, with no re-encoding. */
+async function demuxAac(file,a,b){
+  function u32(d,o){ return d.getUint32(o,false); }
+  function tag(d,o){ return String.fromCharCode(d.getUint8(o),d.getUint8(o+1),d.getUint8(o+2),d.getUint8(o+3)); }
+  function kids(d,s,e){
+    var out=[], o=s;
+    while(o+8<=e){
+      var sz=u32(d,o), ty=tag(d,o+4), hd=8;
+      if(sz===1){ sz=Number(d.getBigUint64(o+8,false)); hd=16; } else if(sz===0){ sz=e-o; }
+      if(sz<hd || o+sz>e) break;
+      out.push({type:ty,s:o+hd,e:o+sz}); o+=sz;
+    }
+    return out;
+  }
+  function find(d,list,t){ for(var i=0;i<list.length;i++) if(list[i].type===t) return list[i]; return null; }
+  /* 1. find the movie box (it can sit before or after the media data) */
+  var pos=0, moov=null, size=file.size;
+  while(pos+8<=size){
+    var hb=new DataView(await file.slice(pos,Math.min(size,pos+16)).arrayBuffer());
+    var sz=u32(hb,0), ty=tag(hb,4), hd=8;
+    if(sz===1){ if(hb.byteLength<16) break; sz=Number(hb.getBigUint64(8,false)); hd=16; } else if(sz===0){ sz=size-pos; }
+    if(sz<hd) break;
+    if(ty==='moov'){ moov={s:pos+hd,e:pos+sz}; break; }
+    pos+=sz;
+  }
+  if(!moov || moov.e-moov.s>200*1048576) return null;
+  var buf=await file.slice(moov.s,moov.e).arrayBuffer(), d=new DataView(buf);
+  var traks=kids(d,0,buf.byteLength).filter(function(k){ return k.type==='trak'; });
+  for(var ti=0;ti<traks.length;ti++){
+    var mdia=find(d,kids(d,traks[ti].s,traks[ti].e),'mdia'); if(!mdia) continue;
+    var mk=kids(d,mdia.s,mdia.e), hdlr=find(d,mk,'hdlr'), mdhd=find(d,mk,'mdhd'), minf=find(d,mk,'minf');
+    if(!hdlr||!mdhd||!minf) continue;
+    if(tag(d,hdlr.s+8)!=='soun') continue;
+    var ver=d.getUint8(mdhd.s), scale=ver===1?u32(d,mdhd.s+20):u32(d,mdhd.s+12);
+    var stbl=find(d,kids(d,minf.s,minf.e),'stbl'); if(!stbl) continue;
+    var sk=kids(d,stbl.s,stbl.e), stsd=find(d,sk,'stsd'), stts=find(d,sk,'stts'), stsc=find(d,sk,'stsc'), stsz=find(d,sk,'stsz'), stco=find(d,sk,'stco')||find(d,sk,'co64');
+    if(!stsd||!stts||!stsc||!stsz||!stco) return null;
+    /* sample description: must be AAC, and we need its two-byte-ish decoder config */
+    var ent=stsd.s+8, entSize=u32(d,ent), entType=tag(d,ent+4);
+    if(entType!=='mp4a') return null;
+    var sver=d.getUint16(ent+8+8), chans=d.getUint16(ent+8+16), pstart=ent+8+28;
+    if(sver===1) pstart+=16; else if(sver===2) return null;
+    var asc=null;
+    (function walk(s,e,depth){
+      kids(d,s,e).forEach(function(k){
+        if(asc) return;
+        if(k.type==='esds'){
+          var o=k.s+4;
+          function len(){ var l=0,c; do{ c=d.getUint8(o++); l=(l<<7)|(c&127); }while(c&128); return l; }
+          while(o<k.e && !asc){
+            var t=d.getUint8(o++), l=len();
+            if(t===3){ var fl=d.getUint8(o+2); o+=3; if(fl&0x80) o+=2; if(fl&0x40){ o+=1+d.getUint8(o); } if(fl&0x20) o+=2; }
+            else if(t===4){ if(d.getUint8(o)!==0x40) { asc=false; return; } o+=13; }
+            else if(t===5){ asc=new Uint8Array(buf.slice(o,o+l)); }
+            else o+=l;
+          }
+        } else if(depth<3 && (k.type==='wave'||k.type==='mp4a')) walk(k.s,k.e,depth+1);
+      });
+    })(pstart,ent+entSize,0);
+    if(!asc || asc.length<2) return null;
+    var objType=asc[0]>>3; if(objType!==2 && objType!==5 && objType!==29) return null;
+    /* sample table */
+    var nts=u32(d,stts.s+4), dts=[], t0=0, i, j;
+    for(i=0;i<nts;i++){ var cnt=u32(d,stts.s+8+i*8), dl=u32(d,stts.s+12+i*8); for(j=0;j<cnt;j++){ dts.push([t0,dl]); t0+=dl; } }
+    var fixed=u32(d,stsz.s+4), ns=u32(d,stsz.s+8), sizes=new Array(ns);
+    for(i=0;i<ns;i++) sizes[i]= fixed ? fixed : u32(d,stsz.s+12+i*4);
+    var nco=u32(d,stco.s+4), is64=stco.type==='co64', offs=new Array(nco);
+    for(i=0;i<nco;i++) offs[i]= is64 ? Number(d.getBigUint64(stco.s+8+i*8,false)) : u32(d,stco.s+8+i*4);
+    var nsc=u32(d,stsc.s+4), runs=[];
+    for(i=0;i<nsc;i++) runs.push([u32(d,stsc.s+8+i*12),u32(d,stsc.s+12+i*12)]);
+    var samples=[], si=0;
+    for(var c=0;c<nco && si<ns;c++){
+      var per=runs[0][1]; for(i=0;i<runs.length;i++) if(runs[i][0]<=c+1) per=runs[i][1];
+      var off=offs[c];
+      for(j=0;j<per && si<ns;j++){ samples.push({o:off,z:sizes[si],t:si<dts.length?dts[si][0]:0,d:si<dts.length?dts[si][1]:1024}); off+=sizes[si]; si++; }
+    }
+    var sel=samples.filter(function(s){ var t=s.t/scale; return t>=a-0.0005 && t<b; });
+    if(!sel.length) return null;
+    /* read the bytes, one slice for each run of neighbouring packets */
+    var chunks=[], r=0;
+    while(r<sel.length){
+      var q=r, endOff=sel[r].o+sel[r].z;
+      while(q+1<sel.length && sel[q+1].o===endOff){ q++; endOff+=sel[q].z; }
+      var bytes=new Uint8Array(await file.slice(sel[r].o,endOff).arrayBuffer()), p=0;
+      for(i=r;i<=q;i++){ chunks.push({data:bytes.slice(p,p+sel[i].z), ts:Math.max(0,Math.round((sel[i].t-sel[0].t)/scale*1e6)), dur:Math.round(sel[i].d/scale*1e6)}); p+=sel[i].z; }
+      r=q+1;
+    }
+    var f=[96000,88200,64000,48000,44100,32000,24000,22050,16000,12000,11025,8000,7350][((asc[0]&7)<<1)|(asc[1]>>7)]||scale;
+    return {chunks:chunks, sampleRate:scale, channels:chans||2, asc:asc, ascRate:f};
+  }
+  return null;
+}
+
+/* Second way to get the sound: play the clip silently into a recorder, in real time, then decode what was recorded. */
+async function recordAudio(a,b,ac){
+  if(!window.MediaRecorder || !objectUrl) return null;
+  var A=document.createElement('video'); A.preload='auto'; A.playsInline=true; A.src=objectUrl;
+  try{
+    await new Promise(function(ok,no){ A.onloadedmetadata=ok; A.onerror=no; setTimeout(no,8000); });
+    A.currentTime=a; await new Promise(function(ok){ A.onseeked=ok; setTimeout(ok,3000); });
+    var node=ac.createMediaElementSource(A), dest=ac.createMediaStreamDestination(); node.connect(dest);
+    try{ await ac.resume(); }catch(e){}
+    var mt=['audio/webm;codecs=opus','audio/mp4','audio/webm'].filter(function(m){ return MediaRecorder.isTypeSupported(m); })[0];
+    var rec=new MediaRecorder(dest.stream, mt?{mimeType:mt}:undefined), chunks=[];
+    rec.ondataavailable=function(e){ if(e.data && e.data.size) chunks.push(e.data); };
+    var stopped=new Promise(function(r){ rec.onstop=r; });
+    rec.start(250); await A.play();
+    await new Promise(function(done){
+      var iv=setInterval(function(){
+        $('prog').value=clamp((A.currentTime-a)/Math.max(0.01,b-a),0,1);
+        say('Recording the sound, '+Math.max(0,Math.ceil(b-A.currentTime))+' s to go…');
+        if(cancelFlag || A.currentTime>=b || A.ended){ clearInterval(iv); done(); }
+      },200);
+    });
+    A.pause(); if(rec.state!=='inactive') rec.stop(); await stopped;
+    if(!chunks.length) return null;
+    var buf=await new Blob(chunks).arrayBuffer();
+    return await new Promise(function(ok,no){ var p=ac.decodeAudioData(buf,ok,no); if(p && p.then) p.then(ok,no); });
+  }catch(e){ try{ A.pause(); }catch(x){} return null; }
+}
+/* Sound for the export: decode the clip's audio, cut out the part being exported and hand it to an AAC or Opus encoder. */
+async function prepAudio(a,b){
+  if(!(window.AudioEncoder && window.AudioData)) return {err:'noenc'};
+  if(!srcFile) return {err:'nofile'};
+  var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return {err:'noenc'};
+  var ac=null, ab=null;
+  try{
+    try{ ac=new AC({sampleRate:48000}); }catch(e){ ac=new AC(); }
+    if(srcFile.size>1200*1048576 || window.__noDecode) throw new Error('skip');
+    var buf=await srcFile.arrayBuffer();
+    ab=await new Promise(function(ok,no){ var p=ac.decodeAudioData(buf,ok,no); if(p && p.then) p.then(ok,no); });
+  }catch(e){ ab=null; }
+  var rec=false;
+  if(!ab && ac){ say('Reading the sound the slower way…'); ab=await recordAudio(a,b,ac); rec=!!ab; }
+  try{ if(ac) ac.close(); }catch(e){}
+  if(!ab) return {err:'silent'};
+  var sr=ab.sampleRate, ch=Math.min(2,ab.numberOfChannels), i0=rec?0:Math.max(0,Math.floor(a*sr)), i1=rec?ab.length:Math.min(ab.length,Math.ceil(b*sr));
+  if(i1-i0<64) return {err:'silent'};
+  var data=[]; for(var c=0;c<ch;c++) data.push(ab.getChannelData(c).subarray(i0,i1));
+  return {sr:sr,ch:ch,data:data,n:i1-i0};
+}
+/* Encodes the sound completely before the picture is built, so a broken audio encoder is noticed up front.
+   AAC is tried first because every Mac player understands it, then Opus. */
+async function encodeAudio(au){
+  var best=null, lastErr='';
+  var cands=[['mp4a.40.2','aac'],['opus','opus']];
+  for(var ci=0;ci<cands.length;ci++){
+    var cfg={codec:cands[ci][0],sampleRate:au.sr,numberOfChannels:au.ch,bitrate:160000};
+    if(cands[ci][1]==='aac') cfg.aac={format:'aac'};
+    try{
+      var sup=await AudioEncoder.isConfigSupported(cfg); if(!(sup && sup.supported)) continue;
+      var out=[], err=null, enc=new AudioEncoder({output:function(chunk,meta){ out.push([chunk,meta]); }, error:function(e){ err=e; }});
+      enc.configure(cfg);
+      var step=4096;
+      for(var off=0;off<au.n;off+=step){
+        var n=Math.min(step,au.n-off), pl=new Float32Array(n*au.ch);
+        for(var c=0;c<au.ch;c++) pl.set(au.data[c].subarray(off,off+n),c*n);
+        var ad=new AudioData({format:'f32-planar',sampleRate:au.sr,numberOfFrames:n,numberOfChannels:au.ch,timestamp:Math.round(off/au.sr*1e6),data:pl});
+        enc.encode(ad); ad.close();
+        if(err) break;
+        while(enc.encodeQueueSize>30){ await new Promise(function(r){ setTimeout(r,2); }); }
+      }
+      if(!err){ await enc.flush(); }
+      try{ enc.close(); }catch(e){}
+      if(err || !out.length) continue;
+      var first=out[0][1];
+      if(cands[ci][1]==='aac' && !(first && first.decoderConfig && first.decoderConfig.description)) continue;
+      var desc=''; try{ var dd=new Uint8Array(first.decoderConfig.description); desc=Array.prototype.map.call(dd.subarray(0,6),function(x){ return (x<16?'0':'')+x.toString(16); }).join(''); }catch(e){}
+      var res={chunks:out,codec:cands[ci][1],cfg:cfg,info:out.length+' blocks, '+(first&&first.decoderConfig&&first.decoderConfig.codec||cfg.codec)+', config '+(desc||'none')};
+      /* build a sound-only file and open it again, to be sure this browser can really read what it just wrote */
+      var chk=await testAudioMux(res,au);
+      res.check=chk.r; res.why=chk.why;
+      if(chk.r==='ok') return res;
+      if(!best) best=res;
+    }catch(e){ lastErr=(e&&e.message)||String(e); }
+  }
+  if(best && lastErr) best.why=(best.why||'')+' '+lastErr;
+  return best;
+}
+async function testAudioMux(res,au){
+  try{
+    var tg=new Mp4Muxer.ArrayBufferTarget();
+    var mx=new Mp4Muxer.Muxer({target:tg,audio:{codec:res.codec,numberOfChannels:au.ch,sampleRate:au.sr},fastStart:'in-memory'});
+    res.chunks.forEach(function(c){ mx.addAudioChunk(c[0],c[1]); });
+    mx.finalize();
+    return await checkAudio(new Blob([tg.buffer],{type:'audio/mp4'}));
+  }catch(e){ return {r:'unknown',why:(e&&e.message)||String(e)}; }
+}
+/* Opens the finished file's sound again and measures it, so the result line can say what is really in it. */
+async function checkAudio(blob){
+  try{
+    var AC=window.AudioContext||window.webkitAudioContext, ac=new AC(), blob_ab=await blob.arrayBuffer();
+    var ab=await new Promise(function(ok,no){ var p=ac.decodeAudioData(blob_ab,ok,no); if(p&&p.then) p.then(ok,no); });
+    try{ ac.close(); }catch(e){}
+    var pk=0; for(var c=0;c<ab.numberOfChannels;c++){ var d=ab.getChannelData(c); for(var i=0;i<d.length;i+=7){ var v=Math.abs(d[i]); if(v>pk) pk=v; } }
+    return {r:pk>0.001 ? 'ok' : 'silent', why:''};
+  }catch(e){ return {r:'unknown', why:(e&&e.message)||String(e)}; }
+}
+async function exportWC(a,b,W,H,cvs,ctx){
+  if(!(window.VideoEncoder && window.VideoFrame && window.Mp4Muxer)) return null;
+  var au=null, audioNote='', ovOnly=(S.outKind==='overlay');
+  if(S.sound && !ovOnly){
+    say('Preparing the sound…');
+    var cp=null; try{ cp=srcFile ? await demuxAac(srcFile,a,b) : null; }catch(e){ cp=null; }
+    if(cp){ au={copy:cp,codec:'aac',ch:cp.channels,sr:cp.sampleRate,enc:{check:'ok',info:'copied',why:''}}; }
+    else {
+    au=await prepAudio(a,b);
+    if(au.err==='noenc' || au.err==='nofile') return null;
+    if(au.err==='silent'){ audioNote=' · NO SOUND: could not read any sound from this video file'; au=null; }
+    else {
+      say('Encoding the sound…'); var ae=await encodeAudio(au);
+      if(!ae) return null;
+      au.enc=ae; au.codec=ae.codec;
+    }
+    }
+  }
+  var outFps=Math.min(S.fps,60), bps=Math.round(clamp(W*H*outFps*0.1,6e6,60e6)), cfg=null, vcodec='avc';
+  var tries=[['avc1.640034','avc'],['avc1.640033','avc'],['avc1.64002a','avc'],['avc1.640028','avc'],['avc1.4d0028','avc'],['vp09.00.51.08','vp9']];
+  for(var i=0;i<tries.length && !cfg;i++){
+    try{
+      var want={codec:tries[i][0],width:W,height:H,bitrate:bps,framerate:outFps};
+      if(tries[i][1]==='avc') want.avc={format:'avc'};
+      var sup=await VideoEncoder.isConfigSupported(want);
+      if(sup && sup.supported){ cfg=want; vcodec=tries[i][1]; }
+    }catch(e){}
+  }
+  if(!cfg) return null;
+  var target=new Mp4Muxer.ArrayBufferTarget();
+  var mopt={target:target, video:{codec:vcodec,width:W,height:H,frameRate:outFps}, fastStart:'in-memory'};
+  if(au) mopt.audio={codec:au.codec,numberOfChannels:au.ch,sampleRate:au.sr};
+  var muxer=new Mp4Muxer.Muxer(mopt);
+  var encErr=null, enc=new VideoEncoder({output:function(chunk,meta){ muxer.addVideoChunk(chunk,meta); }, error:function(e){ encErr=e; }});
+  enc.configure(cfg);
+  if(au && au.copy){
+    var cpy=au.copy;
+    cpy.chunks.forEach(function(c,i){ muxer.addAudioChunkRaw(c.data,'key',c.ts,c.dur,i===0?{decoderConfig:{codec:'mp4a.40.2',sampleRate:cpy.sampleRate,numberOfChannels:cpy.channels,description:cpy.asc}}:undefined); });
+  } else if(au){ au.enc.chunks.forEach(function(c){ muxer.addAudioChunk(c[0],c[1]); }); }
+  var unver=0, dups=0, prevM=null;
+  var N=Math.max(1,Math.floor((b-a)*outFps)), dur=1e6/outFps, sf=S.fps, t0=Date.now();
+  for(var k=0;k<N;k++){
+    if(cancelFlag){ try{ enc.close(); }catch(e){} return {cancelled:true}; }
+    if(encErr) throw encErr;
+    var tt=a+k/outFps;
+    if(ovOnly){ ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H); drawTracer(ctx,W,H,tt*sf,false,1); }
+    else {
+      lastMedia=null;
+      var okf=await seekFrame(tt+0.5/sf,tt); if(!okf) unver++;
+      if(lastMedia!==null){ if(prevM!==null && Math.abs(lastMedia-prevM)<0.0005) dups++; prevM=lastMedia; }
+      ctx.drawImage(el.video,0,0,W,H); drawTracer(ctx,W,H,tt*sf,false,1);
+    }
+    var vf=new VideoFrame(cvs,{timestamp:Math.round(k*dur),duration:Math.round(dur)});
+    enc.encode(vf,{keyFrame:k%(outFps*2)===0}); vf.close();
+    while(enc.encodeQueueSize>6){ await new Promise(function(r){ setTimeout(r,4); }); }
+    if(k%6===0 || k===N-1){
+      $('prog').value=(k+1)/N;
+      var el_s=(Date.now()-t0)/1000, left=Math.max(0,el_s/(k+1)*(N-k-1));
+      say('Rendering frame '+(k+1)+' of '+N+(k>12 ? ', about '+Math.ceil(left)+' s to go.' : '.'));
+      await new Promise(function(r){ setTimeout(r,0); });
+    }
+  }
+  await enc.flush(); muxer.finalize(); try{ enc.close(); }catch(e){}
+  var blob=new Blob([target.buffer],{type:'video/mp4'}), note=audioNote;
+  if(au){
+    var ck=au.enc.check;
+    if(au.copy) note=' · with sound (copied from your video)'; else
+    note = ck==='ok' ? ' · with sound ('+au.codec.toUpperCase()+')' : ck==='silent' ? ' · no sound was heard in this clip' : (' · sound may be missing ('+au.codec.toUpperCase()+', '+ck+') ['+au.enc.info+(au.enc.why?'; '+au.enc.why:'')+']');
+  }
+  if(dups>N*0.08){ var eff=Math.max(1,Math.round(outFps*(1-dups/N))); note+=' · this clip only holds about '+eff+' different frames a second, so some repeat'; }
+  else if(unver>N*0.05) note+=' · '+unver+' frames could not be confirmed, check the preview';
+  return {blob:blob, frames:N, fps:outFps, note:note};
+}
 async function doExport(){
   if(S.exporting||!S.hasVideo||S.points.length<2) return;
   var mime=pickMime();
-  if(mime===null){ say('This browser cannot record video. Use Safari on iPhone or a current Chrome.',true); return; }
+  var canWC=!!(window.VideoEncoder && window.VideoFrame && window.Mp4Muxer);
+  if(mime===null && !canWC){ say('This browser cannot record video. Update Safari or Chrome, or use a current Chrome.',true); return; }
   S.exporting=true; cancelFlag=false; el.video.pause(); updateUI();
   if(compact()) setTab('export');
   $('prog').value=0; say('Recording the clip. Keep this screen open.');
@@ -1202,6 +1976,22 @@ async function doExport(){
   try{ wake=await (navigator.wakeLock && navigator.wakeLock.request('screen')); }catch(e){ wake=null; }
   try{
     await seekTo(a);
+    {
+      var wc=await exportWC(a,b,W,H,cvs,ctx);
+      if(wc){
+        if(wc.cancelled){ say('Export cancelled.'); return; }
+        var isOv=S.outKind==='overlay';
+        showResult(wc.blob,'flightline-'+(isOv?'tracer-':'')+stamp()+'.mp4', W+'×'+H+' · '+(b-a).toFixed(1)+' s · '+wc.fps+' fps · '+(wc.blob.size/1048576).toFixed(1)+' MB'+(isOv?' · tracer on black, set Blend Mode to Screen':(wc.note||'')));
+        say('Done. Check the preview, then save it.'); return;
+      }
+    }
+    if(S.outKind==='overlay'){ say('Tracer-only export needs a current Chrome or Safari 16.4 or newer.',true); return; }
+    if(mime===null){ say('This browser cannot record video. Update Safari or Chrome.',true); return; }
+    if(Math.max(W,H)>1920){
+      var k2=1920/Math.max(W,H); W=Math.max(2,Math.round(W*k2/2)*2); H=Math.max(2,Math.round(H*k2/2)*2);
+      cvs.width=W; cvs.height=H;
+      say('This browser records in real time, so 4K would stutter. Recording at '+W+'×'+H+' instead.');
+    }
     ctx.drawImage(el.video,0,0,W,H); drawTracer(ctx,W,H,a*S.fps,false,1);
     var outFps=Math.min(S.fps,60), stream=cvs.captureStream(outFps);
     el.video.muted=true;
@@ -1253,30 +2043,25 @@ async function doExport(){
     say('Export failed: '+(err && err.message ? err.message : 'the browser stopped the recording')+'. Try 720p.',true);
     try{ if(rec && rec.state!=='inactive') rec.stop(); }catch(e){}
   }finally{
-    S.exporting=false; el.video.pause(); el.video.muted=true; el.video.playbackRate=S.speed;
+    S.exporting=false; el.video.pause(); el.video.muted=!S.hear; el.video.playbackRate=S.speed;
     try{ if(wake) wake.release(); }catch(e){}
     await seekTo(prevT); syncScrub(); drawOverlay(); updateUI();
   }
 }
+(function(){
+  var ok=!!(window.VideoEncoder && window.VideoFrame && window.Mp4Muxer);
+  if(ok) $('exportHint').textContent='Export builds the clip frame by frame, so it comes out smooth at any size. A 4 second clip takes about half a minute. Keep this screen open while it runs.';
+  else $('exportHint').textContent='This browser can only record in real time, so large sizes can stutter. 1080p is the best choice here. A current Chrome or Safari 16.4 or newer gives a smooth export.';
+})();
 $('export').onclick=doExport;
 $('cancel').onclick=function(){ cancelFlag=true; };
 async function saveBlob(name,blob){
-  if(dl){
-    try{ await dl.save({filename:name,data:blob}); say('Saved '+name+'.'); }
-    catch(e){
-      if(e && e.code==='declined') say('Save cancelled.');
-      else say('Could not save the file'+(e&&e.message?': '+e.message:'.'),true);
-    }
-    return;
+  if(!dl){ say('Saving is not available in this view.',true); return; }
+  try{ await dl.save({filename:name,data:blob}); say('Saved '+name+'.'); }
+  catch(e){
+    if(e && e.code==='declined') say('Save cancelled.');
+    else say('Could not save the file'+(e&&e.message?': '+e.message:'.'),true);
   }
-  try{
-    var file=new File([blob],name,{type:blob.type});
-    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:name}); say('Shared '+name+'.'); return; }
-  }catch(e){ if(e && e.name==='AbortError'){ say('Save cancelled.'); return; } }
-  var u=URL.createObjectURL(blob), a=document.createElement('a');
-  a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(function(){ URL.revokeObjectURL(u); },30000);
-  say('Saved '+name+' to your downloads.');
 }
 $('saveVideo').onclick=function(){ if(resultBlob) saveBlob(resultName,resultBlob); };
 $('still').onclick=function(){
@@ -1288,15 +2073,15 @@ $('still').onclick=function(){
 };
 
 /* ---------- init ---------- */
-loadPrefs();
+loadPrefs(); setHear(S.hear);
 syncSegs(); buildSwatches();
 bindRange('width','width','widthVal',function(v){return v+' px';});
-bindRange('slow','slow','slowVal',function(v){return v<=1.05?'linear':v.toFixed(1);});
+bindRange('persp','persp','perspVal',function(v){return v<0.03?'even':Math.round(v*100)+'%';});
 bindRange('tail','tail','tailVal',function(v){return Math.round(v*100)+'%';});
 bindCheck('glow','glow'); bindCheck('dot','dot'); bindCheck('fade','fade'); bindCheck('sound','sound');
 bindCheck('showBadge','showBadge'); bindCheck('countUp','countUp');
 bindSelect('clip','clip'); bindSelect('size','size'); bindSelect('badgePos','badgePos');
-$('carry').addEventListener('input',function(){ var v=parseFloat(this.value); S.carry=(isFinite(v)&&v>0)?Math.min(Math.round(v),999):0; redraw(); });
+$('carry').addEventListener('input',function(){ var v=parseFloat(this.value); S.carry=(isFinite(v)&&v>0)?Math.min(Math.round(v),999):0; updateUI(); redraw(); });
 setPlayIcon(); updateUI();
 /* ---------- phone layout ---------- */
 var MQC=window.matchMedia('(max-width:899px), (max-height:520px)'), MQL=window.matchMedia('(max-height:520px) and (min-aspect-ratio:1/1)');
@@ -1317,22 +2102,41 @@ function setTab(t){
 }
 $('tabbar').addEventListener('click',function(e){
   var b=e.target.closest('button'); if(!b) return;
-  var t=b.dataset.tab; if(document.body.dataset.tab===t && !MQL.matches) t='';
-  setTab(t);
+  setTab(b.dataset.tab);
+  var pn=document.querySelector('.panels'); if(pn) pn.scrollTop=0;
 });
-function onMode(){ if(MQL.matches && !document.body.dataset.tab) setTab('carry'); else layoutStage(); }
+$('helpBtn').onclick=function(){
+  var on=!document.body.classList.contains('hints');
+  document.body.classList.toggle('hints',on); this.setAttribute('aria-pressed',on?'true':'false');
+  this.style.background=on?'var(--accent)':''; this.style.color=on?'var(--accent-fg)':'';
+};
+function onMode(){ if(!document.body.dataset.tab) setTab('trace'); else layoutStage(); }
+if(!document.body.dataset.tab) setTab('trace');
 [MQC,MQL].forEach(function(q){ if(q.addEventListener) q.addEventListener('change',onMode); else if(q.addListener) q.addListener(onMode); });
 if(window.ResizeObserver) new ResizeObserver(layoutStage).observe($('stage'));
-setTab('carry');
+setTab('trace');
 resize(); startDemo();
 if(document.fonts && document.fonts.load){ Promise.all([document.fonts.load('700 40px "Barlow Condensed"'),document.fonts.load('600 40px "Barlow Condensed"'),document.fonts.load('500 20px "IBM Plex Mono"')]).then(function(){ redraw(); }).catch(function(){}); }
 document.addEventListener('visibilitychange',function(){ if(!document.hidden && !S.hasVideo){ if(demoRAF){ cancelAnimationFrame(demoRAF); demoRAF=0; } startDemo(); } });
+/* Beyond the Shot (outside claude.ai): save through the share sheet, else a normal download. */
+function standaloneSave(){
+  return { save: async function(o){
+    var name=o.filename, blob=o.data;
+    try{
+      var file=new File([blob],name,{type:blob.type});
+      if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:name}); return; }
+    }catch(e){ if(e && e.name==='AbortError'){ var d=new Error('declined'); d.code='declined'; throw d; } }
+    var u=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(u); },30000);
+  } };
+}
 (async function(){
   try{ dl = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null; }catch(e){ dl=null; }
+  if(!dl) dl=standaloneSave();
   updateUI();
 })();
 })();
 </script>
 
-</body>
-</html>
+</body></html>
